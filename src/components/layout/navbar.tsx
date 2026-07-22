@@ -10,10 +10,6 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const nav = [
   { href: "/shop", label: "Shop all" },
-  { href: "/shop?category=bongs", label: "Bongs" },
-  { href: "/shop?category=dab-rigs", label: "Dab Rigs" },
-  { href: "/shop?category=hand-pipes", label: "Hand Pipes" },
-  { href: "/shop?category=accessories", label: "Accessories" },
 ];
 
 export function Navbar() {
