@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Minus, Plus, ShoppingBag, Heart, Check, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Minus, Plus, ShoppingBag, Heart, Check, Loader2, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Rating } from "@/components/ui/rating";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,7 @@ export function ProductDetails({ product }: { product: Product }) {
   const add = useCart((s) => s.add);
   const addingVariantId = useCart((s) => s.addingVariantId);
   const wl = useWishlist();
+  const router = useRouter();
 
   const variant = product.variants.find((v) => v.id === variantId) ?? product.variants[0];
   const isAdding = addingVariantId === variant.id;
@@ -38,6 +40,25 @@ export function ProductDetails({ product }: { product: Product }) {
       },
       qty,
     );
+  };
+
+  const onBuyNow = async () => {
+    if (!variant.inStock || isAdding) return;
+    await add(
+      {
+        id: `${product.id}:${variant.id}`,
+        productId: product.id,
+        variantId: variant.id,
+        slug: product.slug,
+        name: product.name,
+        variantName: variant.name,
+        price: variant.price,
+        currency: product.currency,
+        image: product.images[0],
+      },
+      qty,
+    );
+    router.push("/checkout");
   };
 
   return (
@@ -104,6 +125,10 @@ export function ProductDetails({ product }: { product: Product }) {
         <Button size="lg" className="flex-1" onClick={onAdd} disabled={!variant.inStock || isAdding}>
           {isAdding ? <Loader2 className="size-5 animate-spin" /> : <ShoppingBag />}
           {isAdding ? "Adding..." : variant.inStock ? "Add to cart" : "Sold out"}
+        </Button>
+        <Button size="lg" variant="outline" className="flex-1" onClick={onBuyNow} disabled={!variant.inStock || isAdding}>
+          <Zap className="size-5" />
+          Buy now
         </Button>
         <Button size="lg" variant="outline" aria-label="Wishlist" onClick={() => wl.toggle(product.id)}>
           <Heart className={cn(wl.ids.includes(product.id) && "fill-primary text-primary")} />
