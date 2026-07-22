@@ -5,7 +5,6 @@ import Image from "next/image";
 import {
   CheckCircle2,
   Loader2,
-  ChevronRight,
   CreditCard,
   Truck,
 } from "lucide-react";
@@ -50,13 +49,12 @@ const addressSchema = z.object({
 
 type AddressForm = z.infer<typeof addressSchema>;
 
-type Step = "information" | "shipping" | "payment" | "review";
-
 export default function CheckoutPage() {
   const { items, cartId, clear, sync, pendingMutations } = useCart();
-  const [step, setStep] = useState<Step>("information");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [addressSaved, setAddressSaved] = useState(false);
 
   const [regions, setRegions] = useState<MedusaRegion[]>([]);
   const [shippingOptions, setShippingOptions] = useState<MedusaShippingOption[]>([]);
@@ -152,7 +150,7 @@ export default function CheckoutPage() {
           country_code: data.country,
         },
       });
-      setStep("shipping");
+      setAddressSaved(true);
       loadShippingOptions();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save address");
@@ -271,137 +269,113 @@ export default function CheckoutPage() {
 
       <div className="grid gap-10 lg:grid-cols-[1fr_420px]">
         <div className="space-y-8">
-          <div className="flex items-center gap-2 text-sm">
-            <StepIndicator step={1} label="Information" active={step === "information"} completed={step === "shipping" || step === "payment" || step === "review"} />
-            <ChevronRight className="size-4 text-muted-foreground" />
-            <StepIndicator step={2} label="Shipping" active={step === "shipping"} completed={step === "payment" || step === "review"} />
-            <ChevronRight className="size-4 text-muted-foreground" />
-            <StepIndicator step={3} label="Payment" active={step === "payment"} completed={step === "review"} />
-            <ChevronRight className="size-4 text-muted-foreground" />
-            <StepIndicator step={4} label="Review" active={step === "review"} completed={false} />
-          </div>
-
           {error && (
             <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
               {error}
             </div>
           )}
 
-          {step === "information" && (
-            <form onSubmit={handleSubmit(onAddressSubmit)} className="space-y-6">
-              <Section title="Contact">
-                <Field label="Email" error={errors.email?.message}>
-                  <Input type="email" {...register("email")} placeholder="you@domain.com" />
+          <form onSubmit={handleSubmit(onAddressSubmit)} className="space-y-6">
+            <Section title="Contact">
+              <Field label="Email" error={errors.email?.message}>
+                <Input type="email" {...register("email")} placeholder="you@domain.com" />
+              </Field>
+            </Section>
+            <Section title="Shipping address">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="First name" error={errors.firstName?.message}><Input {...register("firstName")} /></Field>
+                <Field label="Last name" error={errors.lastName?.message}><Input {...register("lastName")} /></Field>
+              </div>
+              <Field label="Address" error={errors.address?.message}><Input {...register("address")} /></Field>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <Field label="City" error={errors.city?.message}><Input {...register("city")} /></Field>
+                <Field label="ZIP" error={errors.zip?.message}><Input {...register("zip")} /></Field>
+                <Field label="Country" error={errors.country?.message}>
+                  {availableCountries.length === 0 ? (
+                    <div className="flex h-11 items-center rounded-md border border-border bg-input px-3 text-sm text-muted-foreground">Loading countries...</div>
+                  ) : (
+                    <select {...register("country")} className="flex h-11 w-full rounded-md border border-border bg-input px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
+                      <option value="">Select country</option>
+                      {availableCountries.map((c) => (<option key={c.code} value={c.code}>{c.name}</option>))}
+                    </select>
+                  )}
                 </Field>
-              </Section>
-              <Section title="Shipping address">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="First name" error={errors.firstName?.message}><Input {...register("firstName")} /></Field>
-                  <Field label="Last name" error={errors.lastName?.message}><Input {...register("lastName")} /></Field>
-                </div>
-                <Field label="Address" error={errors.address?.message}><Input {...register("address")} /></Field>
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <Field label="City" error={errors.city?.message}><Input {...register("city")} /></Field>
-                  <Field label="ZIP" error={errors.zip?.message}><Input {...register("zip")} /></Field>
-                  <Field label="Country" error={errors.country?.message}>
-                    {availableCountries.length === 0 ? (
-                      <div className="flex h-11 items-center rounded-md border border-border bg-input px-3 text-sm text-muted-foreground">Loading countries...</div>
-                    ) : (
-                      <select {...register("country")} className="flex h-11 w-full rounded-md border border-border bg-input px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
-                        <option value="">Select country</option>
-                        {availableCountries.map((c) => (<option key={c.code} value={c.code}>{c.name}</option>))}
-                      </select>
-                    )}
-                  </Field>
-                </div>
-              </Section>
+              </div>
+            </Section>
+            {!addressSaved && (
               <Button type="submit" size="lg" className="w-full" disabled={loading}>
                 {loading ? <Loader2 className="mr-2 size-5 animate-spin" /> : <Truck className="mr-2 size-5" />}
-                {loading ? "Saving..." : "Continue to shipping"}
+                {loading ? "Saving..." : "Save & continue"}
               </Button>
-            </form>
-          )}
+            )}
+          </form>
 
-          {step === "shipping" && (
-            <div className="space-y-6">
-              <Section title="Shipping method">
-                {loadingShipping ? (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Loading shipping options...</div>
-                ) : shippingOptions.length === 0 ? (
-                  <div className="text-sm text-muted-foreground">No shipping options available for your address.</div>
-                ) : (
-                  <div className="space-y-2">
-                    {shippingOptions.map((opt) => (
-                      <label key={opt.id} className={cn("flex cursor-pointer items-center justify-between rounded-lg border p-4 transition-colors", selectedShipping === opt.id ? "border-primary bg-primary/5" : "border-border hover:bg-muted")}>
-                        <div className="flex items-center gap-3">
-                          <input type="radio" name="shipping" checked={selectedShipping === opt.id} onChange={() => handleShippingSelect(opt.id)} className="accent-primary" />
-                          <div>
-                            <div className="text-sm font-medium">{opt.name}</div>
-                            <div className="text-xs text-muted-foreground">{opt.provider_id}</div>
-                          </div>
+          {addressSaved && (
+            <Section title="Shipping method">
+              {loadingShipping ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Loading shipping options...</div>
+              ) : shippingOptions.length === 0 ? (
+                <div className="text-sm text-muted-foreground">No shipping options available for your address.</div>
+              ) : (
+                <div className="space-y-2">
+                  {shippingOptions.map((opt) => (
+                    <label key={opt.id} className={cn("flex cursor-pointer items-center justify-between rounded-lg border p-4 transition-colors", selectedShipping === opt.id ? "border-primary bg-primary/5" : "border-border hover:bg-muted")}>
+                      <div className="flex items-center gap-3">
+                        <input type="radio" name="shipping" checked={selectedShipping === opt.id} onChange={() => handleShippingSelect(opt.id)} className="accent-primary" />
+                        <div>
+                          <div className="text-sm font-medium">{opt.name}</div>
+                          <div className="text-xs text-muted-foreground">{opt.provider_id}</div>
                         </div>
-                        <div className="text-sm font-medium">{opt.amount === 0 ? "Free" : formatPrice(opt.amount, items[0]?.currency)}</div>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </Section>
-              <div className="flex gap-3">
-                <Button variant="outline" size="lg" onClick={() => setStep("information")}>Back</Button>
-                <Button size="lg" className="flex-1" onClick={() => setStep("payment")} disabled={!selectedShipping}>Continue to payment</Button>
-              </div>
-            </div>
-          )}
-
-          {step === "payment" && (
-            <div className="space-y-6">
-              <Section title="Payment method">
-                {loadingPayment && !selectedPaymentProvider ? (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Loading payment methods...</div>
-                ) : paymentProviders.length === 0 ? (
-                  <div className="text-sm text-muted-foreground">No payment methods available</div>
-                ) : (
-                  <div className="space-y-2">
-                    {paymentProviders.map((provider) => (
-                      <label key={provider.id} className={cn("flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-colors", selectedPaymentProvider === provider.id ? "border-primary bg-primary/5" : "border-border hover:bg-muted")}>
-                        <input type="radio" name="payment" checked={selectedPaymentProvider === provider.id} onChange={() => handlePaymentProviderSelect(provider.id)} disabled={loadingPayment} className="accent-primary" />
-                        <CreditCard className="size-5 text-muted-foreground" />
-                        <div className="text-sm font-medium capitalize">{provider.id.replace(/^(pp_|prod_psp_)/, "").replace(/_/g, " ")}</div>
-                        {loadingPayment && selectedPaymentProvider === provider.id && <Loader2 className="size-4 animate-spin ml-auto" />}
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </Section>
-              <div className="flex gap-3">
-                <Button variant="outline" size="lg" onClick={() => setStep("shipping")}>Back</Button>
-                <Button size="lg" className="flex-1" onClick={() => setStep("review")} disabled={!selectedPaymentProvider || loadingPayment}>Review order</Button>
-              </div>
-            </div>
-          )}
-
-          {step === "review" && (
-            <div className="space-y-6">
-              <Section title="Review your order">
-                <div className="space-y-4">
-                  <div className="text-sm">
-                    <div className="text-muted-foreground">Shipping method</div>
-                    <div className="font-medium">{shippingOptions.find((o) => o.id === selectedShipping)?.name ?? "Standard"}</div>
-                  </div>
-                  <div className="text-sm">
-                    <div className="text-muted-foreground">Payment method</div>
-                    <div className="font-medium capitalize">{selectedPaymentProvider?.replace(/^(pp_|prod_psp_)/, "").replace(/_/g, " ") ?? "—"}</div>
-                  </div>
+                      </div>
+                      <div className="text-sm font-medium">{opt.amount === 0 ? "Free" : formatPrice(opt.amount, items[0]?.currency)}</div>
+                    </label>
+                  ))}
                 </div>
-              </Section>
-              <div className="flex gap-3">
-                <Button variant="outline" size="lg" onClick={() => setStep("payment")}>Back</Button>
-                <Button size="lg" className="flex-1" onClick={handlePlaceOrder} disabled={loading}>
-                  {loading ? <Loader2 className="mr-2 size-5 animate-spin" /> : null}
-                  {loading ? "Placing order..." : `Pay ${formatPrice(total, items[0]?.currency)}`}
-                </Button>
+              )}
+            </Section>
+          )}
+
+          {selectedShipping && (
+            <Section title="Payment method">
+              {loadingPayment && !selectedPaymentProvider ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Loading payment methods...</div>
+              ) : paymentProviders.length === 0 ? (
+                <div className="text-sm text-muted-foreground">No payment methods available</div>
+              ) : (
+                <div className="space-y-2">
+                  {paymentProviders.map((provider) => (
+                    <label key={provider.id} className={cn("flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-colors", selectedPaymentProvider === provider.id ? "border-primary bg-primary/5" : "border-border hover:bg-muted")}>
+                      <input type="radio" name="payment" checked={selectedPaymentProvider === provider.id} onChange={() => handlePaymentProviderSelect(provider.id)} disabled={loadingPayment} className="accent-primary" />
+                      <CreditCard className="size-5 text-muted-foreground" />
+                      <div className="text-sm font-medium capitalize">{provider.id.replace(/^(pp_|prod_psp_)/, "").replace(/_/g, " ")}</div>
+                      {loadingPayment && selectedPaymentProvider === provider.id && <Loader2 className="size-4 animate-spin ml-auto" />}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </Section>
+          )}
+
+          {selectedPaymentProvider && (
+            <Section title="Review your order">
+              <div className="space-y-4">
+                <div className="text-sm">
+                  <div className="text-muted-foreground">Shipping method</div>
+                  <div className="font-medium">{shippingOptions.find((o) => o.id === selectedShipping)?.name ?? "Standard"}</div>
+                </div>
+                <div className="text-sm">
+                  <div className="text-muted-foreground">Payment method</div>
+                  <div className="font-medium capitalize">{selectedPaymentProvider?.replace(/^(pp_|prod_psp_)/, "").replace(/_/g, " ") ?? "—"}</div>
+                </div>
               </div>
-            </div>
+            </Section>
+          )}
+
+          {selectedPaymentProvider && (
+            <Button size="lg" className="w-full" onClick={handlePlaceOrder} disabled={loading}>
+              {loading ? <Loader2 className="mr-2 size-5 animate-spin" /> : null}
+              {loading ? "Placing order..." : `Pay ${formatPrice(total, items[0]?.currency)}`}
+            </Button>
           )}
         </div>
 
@@ -434,17 +408,6 @@ export default function CheckoutPage() {
           </div>
         </aside>
       </div>
-    </div>
-  );
-}
-
-function StepIndicator({ step, label, active, completed }: { step: number; label: string; active: boolean; completed: boolean }) {
-  return (
-    <div className="flex items-center gap-2">
-      <div className={cn("flex size-7 items-center justify-center rounded-full text-xs font-medium", active && "bg-primary text-primary-foreground", completed && "bg-primary/20 text-primary", !active && !completed && "bg-muted text-muted-foreground")}>
-        {completed ? "✓" : step}
-      </div>
-      <span className={cn("text-sm", active ? "font-medium" : "text-muted-foreground")}>{label}</span>
     </div>
   );
 }

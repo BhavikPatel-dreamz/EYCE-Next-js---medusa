@@ -4,6 +4,33 @@ const MEDUSA_BACKEND_URL = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL;
 const MEDUSA_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY!;
 const MEDUSA_SALES_CHANNEL_ID = process.env.NEXT_PUBLIC_VAPE_SALES_CHANNEL_ID!;
 
+// Dynamically resolved region ID — fetched once from Medusa and cached for the
+// lifetime of the module. Prefers a EUR region; falls back to the first region
+// returned. No env variable required.
+let _regionIdPromise: Promise<string | undefined> | null = null;
+
+function getDefaultRegionId(): Promise<string | undefined> {
+  if (_regionIdPromise) return _regionIdPromise;
+  _regionIdPromise = (async () => {
+    try {
+      const url = new URL("/store/regions", MEDUSA_BACKEND_URL);
+      const res = await fetch(url.toString(), {
+        headers: { "x-publishable-api-key": MEDUSA_PUBLISHABLE_KEY },
+        next: { revalidate: 3600 }, // cache for 1 hour
+      });
+      if (!res.ok) return undefined;
+      const data: { regions: { id: string; currency_code: string }[] } = await res.json();
+      const regions = data.regions ?? [];
+      // Prefer EUR region, then fall back to first available
+      const eur = regions.find((r) => r.currency_code?.toLowerCase() === "eur");
+      return (eur ?? regions[0])?.id;
+    } catch {
+      return undefined;
+    }
+  })();
+  return _regionIdPromise;
+}
+
 const PRODUCT_FIELDS = [
   "id",
   "title",
@@ -20,6 +47,7 @@ const PRODUCT_FIELDS = [
   "*variants",
   "*variants.prices",
   "*variants.options",
+  "*variants.calculated_price",
   "*variants.manage_inventory",
   "*variants.allow_backorder",
   "*variants.inventory_quantity",
@@ -82,16 +110,20 @@ interface MedusaCollection {
 function pickPrice(
   prices: { amount: number; currency_code: string }[],
   fallback: number,
-): number {
-  const usd = prices.find((p) => p.currency_code?.toUpperCase() === "USD");
-  return usd?.amount ?? prices[0]?.amount ?? fallback;
+): { amount: number; currency: string } {
+  const eur = prices.find((p) => p.currency_code?.toUpperCase() === "EUR");
+  const picked = eur ?? prices[0];
+  return {
+    amount: picked?.amount ?? fallback,
+    currency: picked?.currency_code?.toUpperCase() ?? "EUR",
+  };
 }
 
 function pickCompareAt(
   prices: { compare_at_amount?: number; currency_code: string }[],
 ): number | undefined {
-  const usd = prices.find((p) => p.currency_code?.toUpperCase() === "USD");
-  return usd?.compare_at_amount ?? prices[0]?.compare_at_amount;
+  const eur = prices.find((p) => p.currency_code?.toUpperCase() === "EUR");
+  return (eur ?? prices[0])?.compare_at_amount;
 }
 
 function medusaToProduct(p: MedusaProduct): Product {
@@ -99,12 +131,12 @@ function medusaToProduct(p: MedusaProduct): Product {
   const allPrices = variant?.prices ?? [];
   const calc = variant?.calculated_price;
 
-  const price =
-    calc?.calculated_amount ??
-    pickPrice(allPrices, 0);
+  const picked = pickPrice(allPrices, 0);
+  const price = calc?.calculated_amount ?? picked.amount;
   const compareAt =
     calc?.compare_at_amount ??
     pickCompareAt(allPrices);
+  const currency = calc?.currency_code?.toUpperCase() || picked.currency;
 
   return {
     id: p.id,
@@ -116,7 +148,7 @@ function medusaToProduct(p: MedusaProduct): Product {
     category: p.collection?.handle || (p.metadata?.category as string) || "uncategorized",
     price,
     compareAtPrice: compareAt ?? undefined,
-    currency: calc?.currency_code?.toUpperCase() || allPrices.find((p) => p.currency_code?.toUpperCase() === "USD")?.currency_code?.toUpperCase() || allPrices[0]?.currency_code?.toUpperCase() || "USD",
+    currency,
     rating: (p.metadata?.rating as number) || 0,
     reviewCount: (p.metadata?.review_count as number) || 0,
     images: p.images?.map((img) => img.url) || (p.thumbnail ? [p.thumbnail] : []),
@@ -124,7 +156,8 @@ function medusaToProduct(p: MedusaProduct): Product {
       p.variants?.map((v) => {
         const vPrices = v.prices ?? [];
         const vCalc = v.calculated_price;
-        const vPrice = vCalc?.calculated_amount ?? pickPrice(vPrices, 0);
+        const vPicked = pickPrice(vPrices, 0);
+        const vPrice = vCalc?.calculated_amount ?? vPicked.amount;
         const vCompare = vCalc?.compare_at_amount ?? pickCompareAt(vPrices);
         return {
           id: v.id,
@@ -236,6 +269,8 @@ export async function getProducts(opts?: {
   }
 
   params.fields = PRODUCT_FIELDS;
+  const regionId = await getDefaultRegionId();
+  if (regionId) params.region_id = regionId;
 
   const data = await medusaFetch<{ products: MedusaProduct[]; count: number }>(
     "/products",
@@ -266,6 +301,8 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 
   params.fields = PRODUCT_FIELDS;
   params.handle = slug;
+  const regionId = await getDefaultRegionId();
+  if (regionId) params.region_id = regionId;
 
   const data = await medusaFetch<{ products: MedusaProduct[] }>(
     "/products",
@@ -278,10 +315,12 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 
 export async function getProductsByIds(ids: string[]): Promise<Product[]> {
   if (!ids.length) return [];
+  const regionId = await getDefaultRegionId();
   const params: Record<string, string | string[]> = {
     fields: PRODUCT_FIELDS,
     id: ids,
     limit: String(ids.length),
+    ...(regionId ? { region_id: regionId } : {}),
   };
   const data = await medusaFetch<{ products: MedusaProduct[] }>("/products", params);
   return data.products.map(medusaToProduct);
@@ -291,6 +330,8 @@ export async function getRelatedProducts(slug: string, limit = 4): Promise<Produ
   const params: Record<string, string | string[]> = {};
 
   params.fields = PRODUCT_FIELDS;
+  const regionId = await getDefaultRegionId();
+  if (regionId) params.region_id = regionId;
 
   const data = await medusaFetch<{ products: MedusaProduct[] }>("/products", params);
 
