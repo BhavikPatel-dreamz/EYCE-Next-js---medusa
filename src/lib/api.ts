@@ -516,47 +516,26 @@ export type MedusaCompleteCartResponse =
   | { type: "order"; order: MedusaOrder }
   | { type: "cart"; cart: MedusaCart; error: { message: string; name: string; type: string } };
 
-// ─── Cart helpers ────────────────────────────────────────────────────────────
+// ─── SDK client ──────────────────────────────────────────────────────────────
+import { sdk } from "@/api/api";
 
-function getCartHeaders(): Record<string, string> {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    "x-publishable-api-key": MEDUSA_PUBLISHABLE_KEY,
-  };
-  if (MEDUSA_SALES_CHANNEL_ID) {
-    headers["x-sales-channel"] = MEDUSA_SALES_CHANNEL_ID;
-  }
-  return headers;
+// ─── Cart helpers (SDK-based, no CORS issues) ───────────────────────────────
+
+function toMedusaCart(cart: unknown): MedusaCart {
+  return cart as MedusaCart;
 }
 
 export async function createCart(): Promise<MedusaCart> {
-  const res = await fetch(`${MEDUSA_BACKEND_URL}/store/carts`, {
-    method: "POST",
-    headers: getCartHeaders(),
-    body: JSON.stringify({}),
-  });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Failed to create cart: ${res.status} ${body}`);
-  }
-
-  const data = await res.json();
-  return data.cart;
+  const regionId = await getDefaultRegionId();
+  const { cart } = await sdk.store.cart.create(
+    regionId ? { region_id: regionId } : {},
+  );
+  return toMedusaCart(cart);
 }
 
 export async function getCart(cartId: string): Promise<MedusaCart> {
-  const res = await fetch(`${MEDUSA_BACKEND_URL}/store/carts/${cartId}`, {
-    headers: getCartHeaders(),
-  });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Failed to get cart: ${res.status} ${body}`);
-  }
-
-  const data = await res.json();
-  return data.cart;
+  const { cart } = await sdk.store.cart.retrieve(cartId);
+  return toMedusaCart(cart);
 }
 
 export async function addToCart(
@@ -564,19 +543,11 @@ export async function addToCart(
   variantId: string,
   quantity: number = 1,
 ): Promise<MedusaCart> {
-  const res = await fetch(`${MEDUSA_BACKEND_URL}/store/carts/${cartId}/line-items`, {
-    method: "POST",
-    headers: getCartHeaders(),
-    body: JSON.stringify({ variant_id: variantId, quantity }),
+  const { cart } = await sdk.store.cart.createLineItem(cartId, {
+    variant_id: variantId,
+    quantity,
   });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Failed to add to cart: ${res.status} ${body}`);
-  }
-
-  const data = await res.json();
-  return data.cart;
+  return toMedusaCart(cart);
 }
 
 export async function updateCartItem(
@@ -584,50 +555,22 @@ export async function updateCartItem(
   lineItemId: string,
   quantity: number,
 ): Promise<MedusaCart> {
-  const res = await fetch(
-    `${MEDUSA_BACKEND_URL}/store/carts/${cartId}/line-items/${lineItemId}`,
-    {
-      method: "POST",
-      headers: getCartHeaders(),
-      body: JSON.stringify({ quantity }),
-    },
-  );
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Failed to update cart item: ${res.status} ${body}`);
-  }
-
-  const data = await res.json();
-  return data.cart;
+  const { cart } = await sdk.store.cart.updateLineItem(cartId, lineItemId, {
+    quantity,
+  });
+  return toMedusaCart(cart);
 }
 
 export async function removeCartItem(
   cartId: string,
   lineItemId: string,
 ): Promise<MedusaCart> {
-  const res = await fetch(
-    `${MEDUSA_BACKEND_URL}/store/carts/${cartId}/line-items/${lineItemId}`,
-    {
-      method: "DELETE",
-      headers: getCartHeaders(),
-    },
-  );
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Failed to remove cart item: ${res.status} ${body}`);
-  }
-
-  if (res.status === 204) {
-    return getCart(cartId);
-  }
-
-  const data = await res.json();
-  return data.cart;
+  await sdk.store.cart.deleteLineItem(cartId, lineItemId);
+  const { cart } = await sdk.store.cart.retrieve(cartId);
+  return toMedusaCart(cart);
 }
 
-// ─── Checkout helpers ────────────────────────────────────────────────────────
+// ─── Checkout helpers (SDK-based) ───────────────────────────────────────────
 
 export type MedusaRegion = {
   id: string;
@@ -637,17 +580,8 @@ export type MedusaRegion = {
 };
 
 export async function getRegions(): Promise<MedusaRegion[]> {
-  const res = await fetch(`${MEDUSA_BACKEND_URL}/store/regions`, {
-    headers: getCartHeaders(),
-  });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Failed to fetch regions: ${res.status} ${body}`);
-  }
-
-  const data = await res.json();
-  return data.regions;
+  const { regions } = await sdk.store.region.list();
+  return (regions ?? []) as MedusaRegion[];
 }
 
 export async function updateCart(
@@ -659,75 +593,36 @@ export async function updateCart(
     billing_address?: Omit<MedusaAddress, "id">;
   },
 ): Promise<MedusaCart> {
-  const res = await fetch(`${MEDUSA_BACKEND_URL}/store/carts/${cartId}`, {
-    method: "POST",
-    headers: getCartHeaders(),
-    body: JSON.stringify(data),
-  });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Failed to update cart: ${res.status} ${body}`);
-  }
-
-  const result = await res.json();
-  return result.cart;
+  const { cart } = await sdk.store.cart.update(cartId, data);
+  return toMedusaCart(cart);
 }
 
 export async function listShippingOptions(
   cartId: string,
 ): Promise<MedusaShippingOption[]> {
-  const res = await fetch(
-    `${MEDUSA_BACKEND_URL}/store/shipping-options?cart_id=${cartId}`,
-    { headers: getCartHeaders() },
-  );
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Failed to list shipping options: ${res.status} ${body}`);
-  }
-
-  const data = await res.json();
-  return data.shipping_options;
+  const { shipping_options } = await sdk.store.fulfillment.listCartOptions({
+    cart_id: cartId,
+  });
+  return (shipping_options ?? []) as MedusaShippingOption[];
 }
 
 export async function setShippingMethod(
   cartId: string,
   shippingOptionId: string,
 ): Promise<MedusaCart> {
-  const res = await fetch(
-    `${MEDUSA_BACKEND_URL}/store/carts/${cartId}/shipping-methods`,
-    {
-      method: "POST",
-      headers: getCartHeaders(),
-      body: JSON.stringify({ option_id: shippingOptionId }),
-    },
-  );
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Failed to set shipping method: ${res.status} ${body}`);
-  }
-
-  const data = await res.json();
-  return data.cart;
+  const { cart } = await sdk.store.cart.addShippingMethod(cartId, {
+    option_id: shippingOptionId,
+  });
+  return toMedusaCart(cart);
 }
 
 export async function listPaymentProviders(
   regionId: string,
 ): Promise<MedusaPaymentProvider[]> {
-  const res = await fetch(
-    `${MEDUSA_BACKEND_URL}/store/payment-providers?region_id=${regionId}`,
-    { headers: getCartHeaders() },
-  );
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Failed to list payment providers: ${res.status} ${body}`);
-  }
-
-  const data = await res.json();
-  return data.payment_providers;
+  const { payment_providers } = await sdk.store.payment.listPaymentProviders({
+    region_id: regionId,
+  });
+  return (payment_providers ?? []) as MedusaPaymentProvider[];
 }
 
 export async function createPaymentCollection(
@@ -735,29 +630,23 @@ export async function createPaymentCollection(
   retries = 3,
 ): Promise<MedusaPaymentCollection> {
   for (let attempt = 0; attempt <= retries; attempt++) {
-    const res = await fetch(
-      `${MEDUSA_BACKEND_URL}/store/payment-collections`,
-      {
-        method: "POST",
-        headers: getCartHeaders(),
-        body: JSON.stringify({ cart_id: cartId }),
-      },
-    );
-
-    if (res.ok) {
-      const data = await res.json();
-      return data.payment_collection;
+    try {
+      const result = await sdk.client.fetch<{ payment_collection: MedusaPaymentCollection }>(
+        "/store/payment-collections",
+        {
+          method: "POST",
+          body: { cart_id: cartId },
+        },
+      );
+      return result.payment_collection;
+    } catch (err) {
+      if (attempt < retries) {
+        await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+        continue;
+      }
+      throw err;
     }
-
-    if (res.status === 409 && attempt < retries) {
-      await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
-      continue;
-    }
-
-    const body = await res.text().catch(() => "");
-    throw new Error(`Failed to create payment collection: ${res.status} ${body}`);
   }
-
   throw new Error("Failed to create payment collection");
 }
 
@@ -765,40 +654,38 @@ export async function initiatePaymentSession(
   paymentCollectionId: string,
   providerId: string,
 ): Promise<MedusaPaymentSession> {
-  const res = await fetch(
-    `${MEDUSA_BACKEND_URL}/store/payment-collections/${paymentCollectionId}/payment-sessions`,
+  const result = await sdk.client.fetch<{ payment_session: MedusaPaymentSession }>(
+    `/store/payment-collections/${paymentCollectionId}/payment-sessions`,
     {
       method: "POST",
-      headers: getCartHeaders(),
-      body: JSON.stringify({ provider_id: providerId }),
+      body: { provider_id: providerId },
     },
   );
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Failed to initiate payment session: ${res.status} ${body}`);
-  }
-
-  const data = await res.json();
-  return data.payment_session;
+  return result.payment_session;
 }
 
 export async function completeCart(
   cartId: string,
 ): Promise<MedusaCompleteCartResponse> {
-  const res = await fetch(
-    `${MEDUSA_BACKEND_URL}/store/carts/${cartId}/complete`,
-    {
-      method: "POST",
-      headers: getCartHeaders(),
-    },
-  );
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Failed to complete cart: ${res.status} ${body}`);
+  try {
+    const result = await sdk.store.cart.complete(cartId);
+    if (result?.type === "order") {
+      return { type: "order", order: result.order as MedusaOrder };
+    }
+    return {
+      type: "cart",
+      cart: toMedusaCart(result?.cart ?? result),
+      error: { message: "Cart completion did not return an order", name: "cart_error", type: "cart" },
+    };
+  } catch (err) {
+    return {
+      type: "cart",
+      cart: await getCart(cartId),
+      error: {
+        message: err instanceof Error ? err.message : "Failed to complete cart",
+        name: "cart_error",
+        type: "cart",
+      },
+    };
   }
-
-  const data = await res.json();
-  return data;
 }
