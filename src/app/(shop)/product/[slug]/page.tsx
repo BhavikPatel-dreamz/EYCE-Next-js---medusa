@@ -6,8 +6,13 @@ import { ProductDetails } from "@/components/product/product-details";
 import { ProductCard } from "@/components/product/product-card";
 
 export async function generateStaticParams() {
-  const { products: list } = await getProducts();
-  return list.map((p) => ({ slug: p.slug }));
+  try {
+    const { products: list } = await getProducts({ limit: 100 });
+    return list.map((p) => ({ slug: p.slug }));
+  } catch (e) {
+    console.error("generateStaticParams failed, returning empty:", e);
+    return [];
+  }
 }
 
 export async function generateMetadata(

@@ -61,7 +61,14 @@ let mutationQueue: Promise<void> = Promise.resolve();
 
 async function ensureCartId(get: () => CartState, set: (partial: Partial<CartState>) => void): Promise<string> {
   const { cartId } = get();
-  if (cartId) return cartId;
+  if (cartId) {
+    try {
+      await apiGetCart(cartId);
+      return cartId;
+    } catch {
+      set({ cartId: null });
+    }
+  }
 
   if (!cartCreationPromise) {
     cartCreationPromise = apiCreateCart()

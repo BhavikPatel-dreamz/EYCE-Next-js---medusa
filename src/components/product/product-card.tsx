@@ -25,7 +25,7 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
     e.preventDefault();
     if (!variant?.inStock || isAdding) return;
     add({
-      id: `${product.id}-${variant.id}`,
+      id: `${product.id}:${variant.id}`,
       productId: product.id,
       variantId: variant.id,
       slug: product.slug,
