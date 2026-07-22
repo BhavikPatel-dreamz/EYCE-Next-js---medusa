@@ -322,7 +322,17 @@ export async function getProductsByIds(ids: string[]): Promise<Product[]> {
     limit: String(ids.length),
     ...(regionId ? { region_id: regionId } : {}),
   };
-  const data = await medusaFetch<{ products: MedusaProduct[] }>("/products", params);
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, val]) => {
+    if (Array.isArray(val)) {
+      val.forEach((v) => searchParams.append(`${key}[]`, v));
+    } else {
+      searchParams.set(key, val);
+    }
+  });
+  const data = await sdk.client.fetch<{ products: MedusaProduct[] }>(
+    `/store/products?${searchParams.toString()}`,
+  );
   return data.products.map(medusaToProduct);
 }
 

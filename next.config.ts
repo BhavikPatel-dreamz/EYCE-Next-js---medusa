@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+const MEDUSA_BACKEND_URL = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000";
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -8,6 +10,14 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "www.eyce.com" },
       { protocol: "https", hostname: "medusa.dynamicdreamz.com" },
     ],
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/store/:path*",
+        destination: `${MEDUSA_BACKEND_URL}/store/:path*`,
+      },
+    ];
   },
 };
 
