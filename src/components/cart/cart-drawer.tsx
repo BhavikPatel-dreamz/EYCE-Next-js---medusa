@@ -62,7 +62,7 @@ export function CartDrawer() {
                               <div className="text-sm font-medium">{i.name}</div>
                               <div className="text-xs text-muted-foreground">{i.variantName}</div>
                             </div>
-                            <div className="font-mono text-sm">{formatPrice(i.price * i.quantity)}</div>
+                            <div className="font-mono text-sm">{formatPrice(i.price * i.quantity, i.currency)}</div>
                           </div>
                           <div className="mt-auto flex items-center justify-between">
                             <div className="flex items-center rounded-md border border-border">
@@ -90,7 +90,7 @@ export function CartDrawer() {
                   </div>
                   <div className="flex items-baseline justify-between">
                     <span className="font-mono text-sm uppercase tracking-widest text-muted-foreground">Subtotal</span>
-                    <span className="font-display text-2xl font-bold">{formatPrice(subtotal)}</span>
+                    <span className="font-display text-2xl font-bold">{formatPrice(subtotal, items[0]?.currency)}</span>
                   </div>
                   <Separator className="my-4" />
                   <Button asChild size="lg" className="w-full" onClick={close}>

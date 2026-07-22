@@ -99,7 +99,7 @@ export default function CheckoutPage() {
       setShippingOptions(options);
       if (options.length === 1) {
         setSelectedShipping(options[0].id);
-        setShippingCost(Math.round(options[0].amount / 100));
+        setShippingCost(options[0].amount);
         await setShippingMethod(cartId, options[0].id);
       }
     } catch (err) {
@@ -166,7 +166,7 @@ export default function CheckoutPage() {
     await pendingMutations();
     setSelectedShipping(optionId);
     const option = shippingOptions.find((o) => o.id === optionId);
-    setShippingCost(option ? Math.round(option.amount / 100) : 0);
+    setShippingCost(option ? option.amount : 0);
     try {
       await setShippingMethod(cartId, optionId);
     } catch (err) {
@@ -340,7 +340,7 @@ export default function CheckoutPage() {
                             <div className="text-xs text-muted-foreground">{opt.provider_id}</div>
                           </div>
                         </div>
-                        <div className="text-sm font-medium">{opt.amount === 0 ? "Free" : formatPrice(Math.round(opt.amount / 100))}</div>
+                        <div className="text-sm font-medium">{opt.amount === 0 ? "Free" : formatPrice(opt.amount, items[0]?.currency)}</div>
                       </label>
                     ))}
                   </div>
@@ -398,7 +398,7 @@ export default function CheckoutPage() {
                 <Button variant="outline" size="lg" onClick={() => setStep("payment")}>Back</Button>
                 <Button size="lg" className="flex-1" onClick={handlePlaceOrder} disabled={loading}>
                   {loading ? <Loader2 className="mr-2 size-5 animate-spin" /> : null}
-                  {loading ? "Placing order..." : `Pay ${formatPrice(total)}`}
+                  {loading ? "Placing order..." : `Pay ${formatPrice(total, items[0]?.currency)}`}
                 </Button>
               </div>
             </div>
@@ -418,19 +418,19 @@ export default function CheckoutPage() {
                   <div>{i.name}</div>
                   <div className="text-xs text-muted-foreground">{i.variantName}</div>
                 </div>
-                <div className="text-sm">{formatPrice(i.price * i.quantity)}</div>
+                <div className="text-sm">{formatPrice(i.price * i.quantity, i.currency)}</div>
               </li>
             ))}
           </ul>
           <Separator className="my-5" />
           <div className="space-y-1.5 text-sm">
-            <div className="flex justify-between"><span>Subtotal</span><span>{formatPrice(subtotal)}</span></div>
-            <div className="flex justify-between"><span>Shipping</span><span>{shippingCost === 0 && selectedShipping ? "Free" : selectedShipping ? formatPrice(shippingCost) : "Calculated at next step"}</span></div>
+            <div className="flex justify-between"><span>Subtotal</span><span>{formatPrice(subtotal, items[0]?.currency)}</span></div>
+            <div className="flex justify-between"><span>Shipping</span><span>{shippingCost === 0 && selectedShipping ? "Free" : selectedShipping ? formatPrice(shippingCost, items[0]?.currency) : "Calculated at next step"}</span></div>
           </div>
           <Separator className="my-4" />
           <div className="flex items-baseline justify-between">
             <span>Total</span>
-            <span className="font-display text-2xl font-bold">{formatPrice(total)}</span>
+            <span className="font-display text-2xl font-bold">{formatPrice(total, items[0]?.currency)}</span>
           </div>
         </aside>
       </div>

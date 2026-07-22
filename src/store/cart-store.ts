@@ -49,7 +49,8 @@ function syncCartItems(
       slug: product?.handle ?? prevItem?.slug ?? "",
       name: product?.title ?? prevItem?.name ?? li.title,
       variantName: li.variant?.title ?? prevItem?.variantName ?? "",
-      price: Math.round(li.unit_price / 100),
+      price: li.unit_price,
+      currency: cart.currency_code?.toUpperCase() ?? prevItem?.currency ?? "USD",
       image: product?.thumbnail ?? prevItem?.image ?? "",
       quantity: li.quantity,
     };

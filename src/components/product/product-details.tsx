@@ -33,6 +33,7 @@ export function ProductDetails({ product }: { product: Product }) {
         name: product.name,
         variantName: variant.name,
         price: variant.price,
+        currency: product.currency,
         image: product.images[0],
       },
       qty,
@@ -54,10 +55,10 @@ export function ProductDetails({ product }: { product: Product }) {
       </div>
 
       <div className="flex items-baseline gap-3">
-        <div className="font-mono text-3xl">{formatPrice(variant.price)}</div>
+        <div className="font-mono text-3xl">{formatPrice(variant.price, product.currency)}</div>
         {product.compareAtPrice && (
           <div className="text-lg text-muted-foreground line-through">
-            {formatPrice(product.compareAtPrice)}
+            {formatPrice(product.compareAtPrice, product.currency)}
           </div>
         )}
       </div>

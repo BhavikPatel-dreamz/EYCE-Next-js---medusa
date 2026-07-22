@@ -45,8 +45,8 @@ export default function CartPage() {
                     <div className="text-sm text-muted-foreground">{i.variantName}</div>
                   </div>
                   <div className="text-right">
-                    <div className="font-medium">{formatPrice(i.price * i.quantity)}</div>
-                    <div className="text-xs text-muted-foreground">{formatPrice(i.price)} each</div>
+                    <div className="font-medium">{formatPrice(i.price * i.quantity, i.currency)}</div>
+                    <div className="text-xs text-muted-foreground">{formatPrice(i.price, i.currency)} each</div>
                   </div>
                 </div>
                 <div className="mt-auto flex flex-wrap items-center justify-between gap-2">
@@ -68,13 +68,13 @@ export default function CartPage() {
         <aside className="h-fit rounded-xl border border-border bg-card p-6">
           <div className="mb-2 font-mono text-xs uppercase tracking-[0.15em] text-muted-foreground">Order summary</div>
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between"><span>Subtotal</span><span>{formatPrice(subtotal)}</span></div>
-            <div className="flex justify-between"><span>Shipping</span><span>{shipping === 0 ? "Free" : formatPrice(shipping)}</span></div>
+            <div className="flex justify-between"><span>Subtotal</span><span>{formatPrice(subtotal, items[0]?.currency)}</span></div>
+            <div className="flex justify-between"><span>Shipping</span><span>{shipping === 0 ? "Free" : formatPrice(shipping, items[0]?.currency)}</span></div>
           </div>
           <Separator className="my-4" />
           <div className="flex items-baseline justify-between">
             <span>Total</span>
-            <span className="font-display text-2xl font-bold">{formatPrice(total)}</span>
+            <span className="font-display text-2xl font-bold">{formatPrice(total, items[0]?.currency)}</span>
           </div>
           <Button asChild size="lg" className="mt-6 w-full"><Link href="/checkout">Checkout</Link></Button>
           <Button asChild variant="ghost" className="mt-2 w-full"><Link href="/shop">Continue shopping</Link></Button>

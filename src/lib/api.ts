@@ -18,7 +18,11 @@ const PRODUCT_FIELDS = [
   "*tags",
   "*images",
   "*variants",
+  "*variants.prices",
   "*variants.options",
+  "*variants.manage_inventory",
+  "*variants.allow_backorder",
+  "*variants.inventory_quantity",
   "*categories",
   "*collection",
 ].join(",");
@@ -75,15 +79,32 @@ interface MedusaCollection {
   handle: string;
 }
 
+function pickPrice(
+  prices: { amount: number; currency_code: string }[],
+  fallback: number,
+): number {
+  const usd = prices.find((p) => p.currency_code?.toUpperCase() === "USD");
+  return usd?.amount ?? prices[0]?.amount ?? fallback;
+}
+
+function pickCompareAt(
+  prices: { compare_at_amount?: number; currency_code: string }[],
+): number | undefined {
+  const usd = prices.find((p) => p.currency_code?.toUpperCase() === "USD");
+  return usd?.compare_at_amount ?? prices[0]?.compare_at_amount;
+}
+
 function medusaToProduct(p: MedusaProduct): Product {
   const variant = p.variants?.[0];
+  const allPrices = variant?.prices ?? [];
+  const calc = variant?.calculated_price;
+
   const price =
-    variant?.calculated_price?.calculated_amount ??
-    variant?.prices?.[0]?.amount ??
-    0;
+    calc?.calculated_amount ??
+    pickPrice(allPrices, 0);
   const compareAt =
-    variant?.calculated_price?.compare_at_amount ??
-    variant?.prices?.[0]?.compare_at_amount;
+    calc?.compare_at_amount ??
+    pickCompareAt(allPrices);
 
   return {
     id: p.id,
@@ -93,21 +114,23 @@ function medusaToProduct(p: MedusaProduct): Product {
     description: p.description || "",
     longDescription: p.description || "",
     category: p.collection?.handle || (p.metadata?.category as string) || "uncategorized",
-    price: Math.round(price / 100),
-    compareAtPrice: compareAt ? Math.round(compareAt / 100) : undefined,
-    currency: variant?.calculated_price?.currency_code?.toUpperCase() || "USD",
+    price,
+    compareAtPrice: compareAt ?? undefined,
+    currency: calc?.currency_code?.toUpperCase() || allPrices.find((p) => p.currency_code?.toUpperCase() === "USD")?.currency_code?.toUpperCase() || allPrices[0]?.currency_code?.toUpperCase() || "USD",
     rating: (p.metadata?.rating as number) || 0,
     reviewCount: (p.metadata?.review_count as number) || 0,
     images: p.images?.map((img) => img.url) || (p.thumbnail ? [p.thumbnail] : []),
     variants:
       p.variants?.map((v) => {
-        const vPrice = v.calculated_price?.calculated_amount ?? v.prices?.[0]?.amount ?? 0;
-        const vCompare = v.calculated_price?.compare_at_amount ?? v.prices?.[0]?.compare_at_amount;
+        const vPrices = v.prices ?? [];
+        const vCalc = v.calculated_price;
+        const vPrice = vCalc?.calculated_amount ?? pickPrice(vPrices, 0);
+        const vCompare = vCalc?.compare_at_amount ?? pickCompareAt(vPrices);
         return {
           id: v.id,
           name: [v.title, ...v.options.map((o) => o.value)].filter(Boolean).join(" / "),
-          price: Math.round(vPrice / 100),
-          compareAtPrice: vCompare ? Math.round(vCompare / 100) : undefined,
+          price: vPrice,
+          compareAtPrice: vCompare ?? undefined,
           inStock: v.manage_inventory === false || (v.manage_inventory === true && (v.inventory_quantity ?? 0) > 0) || !!v.allow_backorder,
           sku: v.sku || "",
         };
