@@ -17,6 +17,10 @@ export function PriceRangeSlider({
   const [hi, setHi] = useState(initialMax ?? max);
   const trackRef = useRef<HTMLDivElement>(null);
   const dragging = useRef<"lo" | "hi" | null>(null);
+  const loRef = useRef(lo);
+  const hiRef = useRef(hi);
+  loRef.current = lo;
+  hiRef.current = hi;
 
   const pct = (v: number) => ((v - min) / (max - min)) * 100;
 
@@ -30,40 +34,44 @@ export function PriceRangeSlider({
     [min, max],
   );
 
-  const commit = useCallback(() => {
-    const form = trackRef.current?.closest("form");
-    if (form) form.requestSubmit();
-  }, []);
+  const updateFromPointer = useCallback(
+    (clientX: number) => {
+      const v = resolve(clientX);
+      if (v == null) return;
+      if (dragging.current === "lo") setLo(Math.min(v, hiRef.current - 1));
+      else if (dragging.current === "hi") setHi(Math.max(v, loRef.current + 1));
+    },
+    [resolve],
+  );
 
   useEffect(() => {
-    const onMove = (e: MouseEvent) => {
-      const v = resolve(e.clientX);
-      if (v == null) return;
-      if (dragging.current === "lo") setLo(Math.min(v, hi - 1));
-      else if (dragging.current === "hi") setHi(Math.max(v, lo + 1));
+    const onMouseMove = (e: MouseEvent) => updateFromPointer(e.clientX);
+    const onMouseUp = () => { dragging.current = null; };
+    const onTouchMove = (e: TouchEvent) => {
+      if (dragging.current && e.touches.length) {
+        e.preventDefault();
+        updateFromPointer(e.touches[0].clientX);
+      }
     };
-    const onUp = () => {
-      if (dragging.current) commit();
-      dragging.current = null;
-    };
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
+    const onTouchEnd = () => { dragging.current = null; };
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("touchend", onTouchEnd);
     return () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
     };
-  }, [hi, lo, resolve, commit]);
+  }, [updateFromPointer]);
 
-  const onTouch = useCallback(
-    (thumb: "lo" | "hi") => (e: React.TouchEvent) => {
+  const onPointerDown = useCallback(
+    (thumb: "lo" | "hi") => (e: React.MouseEvent | React.TouchEvent) => {
       e.preventDefault();
       dragging.current = thumb;
-      const v = resolve(e.touches[0].clientX);
-      if (v == null) return;
-      if (thumb === "lo") setLo(Math.min(v, hi - 1));
-      else setHi(Math.max(v, lo + 1));
     },
-    [hi, lo, resolve],
+    [],
   );
 
   return (
@@ -86,14 +94,14 @@ export function PriceRangeSlider({
         <div
           className="absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 cursor-grab rounded-full border-2 border-primary bg-background shadow-sm active:cursor-grabbing"
           style={{ left: `${pct(lo)}%` }}
-          onMouseDown={() => (dragging.current = "lo")}
-          onTouchStart={onTouch("lo")}
+          onMouseDown={onPointerDown("lo")}
+          onTouchStart={onPointerDown("lo")}
         />
         <div
           className="absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 cursor-grab rounded-full border-2 border-primary bg-background shadow-sm active:cursor-grabbing"
           style={{ left: `${pct(hi)}%` }}
-          onMouseDown={() => (dragging.current = "hi")}
-          onTouchStart={onTouch("hi")}
+          onMouseDown={onPointerDown("hi")}
+          onTouchStart={onPointerDown("hi")}
         />
       </div>
 

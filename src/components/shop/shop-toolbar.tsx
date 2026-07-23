@@ -79,7 +79,7 @@ export function ShopToolbar({
   return (
     <>
       <div className="mb-6 space-y-4">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
@@ -93,28 +93,28 @@ export function ShopToolbar({
               </span>
             )}
           </button>
-        </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-muted-foreground">Sort:</span>
-          {SORT_OPTIONS.map(([label, val]) => {
-            const href = buildHref(sp, { sort: val || undefined, page: undefined });
-            const isActive = (sp.sort ?? "") === val;
-            return (
-              <Link
-                key={label}
-                href={href}
-                className={`rounded-full px-3 py-1 text-xs transition-colors ${
-                  isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-                }`}
-              >
-                {label}
-              </Link>
-            );
-          })}
-          <span className="ml-auto text-xs text-muted-foreground">
-            {totalProducts} product{totalProducts !== 1 && "s"}
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground">Sort:</span>
+            {SORT_OPTIONS.map(([label, val]) => {
+              const href = buildHref(sp, { sort: val || undefined, page: undefined });
+              const isActive = (sp.sort ?? "") === val;
+              return (
+                <Link
+                  key={label}
+                  href={href}
+                  className={`rounded-full px-3 py-1 text-xs transition-colors ${
+                    isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                  }`}
+                >
+                  {label}
+                </Link>
+              );
+            })}
+            <span className="text-xs text-muted-foreground">
+              {totalProducts} product{totalProducts !== 1 && "s"}
+            </span>
+          </div>
         </div>
 
         {(sp.category || sp.collection || sp.minPrice || sp.maxPrice || sp.inStock === "1" || sp.onSale === "1") && (
@@ -189,7 +189,7 @@ export function ShopToolbar({
       {/* Sidebar Panel */}
       <div
         ref={panelRef}
-        className={`fixed inset-y-0 left-0 z-50 w-72 overflow-y-auto bg-background p-6 shadow-xl transition-transform duration-300 ease-in-out ${
+        className={`fixed inset-y-0 left-0 z-50 w-96 overflow-y-auto bg-background p-6 shadow-xl transition-transform duration-300 ease-in-out ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
