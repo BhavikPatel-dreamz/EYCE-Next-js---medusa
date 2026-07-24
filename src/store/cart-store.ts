@@ -100,37 +100,19 @@ export const useCart = create<CartState>()(
 
       add: async (item, qty = 1) => {
         mutationQueue = mutationQueue.then(async () => {
-          const prevItems = get().items;
-          const existing = prevItems.find((i) => i.variantId === item.variantId);
-
-          if (existing) {
-            set((s) => ({
-              items: s.items.map((i) =>
-                i.variantId === item.variantId
-                  ? { ...i, quantity: i.quantity + qty }
-                  : i,
-              ),
-              isOpen: true,
-              addingVariantId: item.variantId,
-            }));
-          } else {
-            set((s) => ({
-              items: [...s.items, { ...item, quantity: qty }],
-              isOpen: true,
-              addingVariantId: item.variantId,
-            }));
-          }
+          set({ addingVariantId: item.variantId });
 
           try {
             const cartId = await ensureCartId(get, set);
             const cart = await apiAddToCart(cartId, item.variantId, qty);
             set((s) => ({
               items: syncCartItems(cart, s.items, { ...item, quantity: qty }),
+              isOpen: true,
               addingVariantId: null,
             }));
           } catch (err) {
             console.error("Failed to add item to Medusa cart:", err);
-            set({ items: prevItems, addingVariantId: null });
+            set({ addingVariantId: null });
           }
         });
         return mutationQueue;
