@@ -655,43 +655,61 @@ export async function getCartWithPaymentCollection(cartId: string): Promise<Medu
   return toMedusaCart(cart);
 }
 
-export async function createPaymentCollection(
+// Per-cart in-flight promise — prevents concurrent POST /store/payment-collections
+// requests for the same cart, which is the root cause of the 409 conflict error.
+const _paymentCollectionPromises = new Map<string, Promise<MedusaPaymentCollection>>();
+
+export function createPaymentCollection(cartId: string): Promise<MedusaPaymentCollection> {
+  const inflight = _paymentCollectionPromises.get(cartId);
+  if (inflight) return inflight;
+
+  const promise = _createPaymentCollectionImpl(cartId).finally(() => {
+    _paymentCollectionPromises.delete(cartId);
+  });
+  _paymentCollectionPromises.set(cartId, promise);
+  return promise;
+}
+
+async function _createPaymentCollectionImpl(
   cartId: string,
-  retries = 2,
 ): Promise<MedusaPaymentCollection> {
+  // 1. Check whether a collection already exists before attempting to create.
   try {
     const cart = await getCartWithPaymentCollection(cartId);
-    if (cart.payment_collection?.id) {
-      return cart.payment_collection;
-    }
+    if (cart.payment_collection?.id) return cart.payment_collection;
   } catch {
-    // ignore — will try to create below
+    // ignore — will attempt creation below
   }
 
-  for (let attempt = 0; attempt <= retries; attempt++) {
+  const MAX_ATTEMPTS = 3;
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     try {
       const result = await sdk.client.fetch<{ payment_collection: MedusaPaymentCollection }>(
         "/store/payment-collections",
-        {
-          method: "POST",
-          body: { cart_id: cartId },
-        },
+        { method: "POST", body: { cart_id: cartId } },
       );
       return result.payment_collection;
     } catch (err) {
-      const status = (err as { status?: number })?.status;
-      if (status === 409) {
-        try {
-          const cart = await getCartWithPaymentCollection(cartId);
-          if (cart.payment_collection?.id) {
-            return cart.payment_collection;
+      const isConflict =
+        (err as { status?: number })?.status === 409 ||
+        String(err).toLowerCase().includes("conflict");
+
+      if (isConflict) {
+        // Another request already created the collection — poll until we can
+        // retrieve it (Medusa may need a moment to propagate it).
+        for (let fetch = 0; fetch < 4; fetch++) {
+          await new Promise((r) => setTimeout(r, 300 * (fetch + 1)));
+          try {
+            const cart = await getCartWithPaymentCollection(cartId);
+            if (cart.payment_collection?.id) return cart.payment_collection;
+          } catch {
+            // keep polling
           }
-        } catch {
-          // fall through to throw
         }
       }
-      if (attempt < retries) {
-        await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+
+      if (attempt < MAX_ATTEMPTS - 1) {
+        await new Promise((r) => setTimeout(r, 600 * (attempt + 1)));
         continue;
       }
       throw err;
