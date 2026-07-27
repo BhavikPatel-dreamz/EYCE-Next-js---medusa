@@ -432,10 +432,10 @@ const CATEGORY_ID_MAP: Record<string, string> = {
 };
 
 const CART_FIELDS =
-  "id,*items,items.id,items.title,items.quantity,items.unit_price,items.total,items.variant_id,items.variant,items.product,items.thumbnail,*items.variant,items.variant.id,items.variant.title,items.variant.product,items.variant.product.id,items.variant.product.title,items.variant.product.handle,items.variant.product.thumbnail,subtotal,total,currency_code,region_id,email,*shipping_address,*billing_address";
+  "id,completed_at,*items,items.id,items.title,items.quantity,items.unit_price,items.total,items.variant_id,items.variant,items.product,items.thumbnail,*items.variant,items.variant.id,items.variant.title,items.variant.product,items.variant.product.id,items.variant.product.title,items.variant.product.handle,items.variant.product.thumbnail,subtotal,total,currency_code,region_id,email,*shipping_address,*billing_address";
 
 const CART_FIELDS_WITH_PAYMENT =
-  "id,*items,items.id,items.title,items.quantity,items.unit_price,items.total,items.variant_id,items.variant,items.product,items.thumbnail,*items.variant,items.variant.id,items.variant.title,items.variant.product,items.variant.product.id,items.variant.product.title,items.variant.product.handle,items.variant.product.thumbnail,subtotal,total,currency_code,region_id,email,*shipping_address,*billing_address,payment_collection.id,payment_collection.cart_id,payment_collection.amount";
+  "id,*items,items.id,items.title,items.quantity,items.unit_price,items.total,items.variant_id,items.variant,items.product,items.thumbnail,*items.variant,items.variant.id,items.variant.title,items.variant.product,items.variant.product.id,items.variant.product.title,items.variant.product.handle,items.variant.product.thumbnail,subtotal,total,currency_code,region_id,email,*shipping_address,*billing_address,payment_collection.id,payment_collection.cart_id,payment_collection.amount,*payment_collection.payment_sessions,payment_collection.payment_sessions.id,payment_collection.payment_sessions.provider_id,payment_collection.payment_sessions.status";
 
 const ORDER_FIELDS = "id,display_id,status,email,total";
 
@@ -443,6 +443,7 @@ const ORDER_FIELDS = "id,display_id,status,email,total";
 
 export type MedusaCart = {
   id: string;
+  completed_at?: string | null;
   items: MedusaCartItem[];
   subtotal: number;
   total: number;
@@ -454,6 +455,11 @@ export type MedusaCart = {
   shipping_methods?: MedusaShippingMethod[];
   payment_collection?: MedusaPaymentCollection | null;
 };
+
+/** Returns true if the Medusa cart has already been completed (converted to an order). */
+export function isCartCompleted(cart: MedusaCart): boolean {
+  return Boolean(cart.completed_at);
+}
 
 export type MedusaAddress = {
   id?: string;
@@ -698,14 +704,43 @@ export async function initiatePaymentSession(
   paymentCollectionId: string,
   providerId: string,
 ): Promise<MedusaPaymentSession> {
+  // A stable idempotency key scoped to this collection+provider pair prevents
+  // Medusa from returning a 409 conflict when the same session is initiated
+  // more than once (e.g. on retry or double-click).
+  const idempotencyKey = `payment-session-${paymentCollectionId}-${providerId}`;
   const result = await sdk.client.fetch<{ payment_session: MedusaPaymentSession }>(
     `/store/payment-collections/${paymentCollectionId}/payment-sessions`,
     {
       method: "POST",
       body: { provider_id: providerId },
+      headers: { "Idempotency-Key": idempotencyKey },
     },
   );
   return result.payment_session;
+}
+
+/**
+ * Ensures a payment collection and an active session for the given provider
+ * exist on the cart. Safe to call multiple times — idempotent.
+ */
+export async function ensurePaymentSession(
+  cartId: string,
+  providerId: string,
+): Promise<{ collection: MedusaPaymentCollection; session: MedusaPaymentSession }> {
+  // 1. Get or create the payment collection.
+  const collection = await createPaymentCollection(cartId);
+
+  // 2. Check if a session for this provider already exists and is pending.
+  const existingSession = collection.payment_sessions?.find(
+    (s) => s.provider_id === providerId && s.status === "pending",
+  );
+  if (existingSession) {
+    return { collection, session: existingSession };
+  }
+
+  // 3. Initiate (or re-initiate) the session.
+  const session = await initiatePaymentSession(collection.id, providerId);
+  return { collection, session };
 }
 
 export async function completeCart(

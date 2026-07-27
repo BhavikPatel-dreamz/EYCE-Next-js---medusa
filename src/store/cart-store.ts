@@ -8,6 +8,7 @@ import {
   updateCartItem as apiUpdateCartItem,
   removeCartItem as apiRemoveCartItem,
   getCart as apiGetCart,
+  isCartCompleted,
   type MedusaCart,
 } from "@/lib/api";
 import type { CartItem } from "@/types/cart";
@@ -64,11 +65,16 @@ async function ensureCartId(get: () => CartState, set: (partial: Partial<CartSta
   const { cartId } = get();
   if (cartId) {
     try {
-      await apiGetCart(cartId);
-      return cartId;
+      const cart = await apiGetCart(cartId);
+      // If the cart was already completed (converted to an order), treat it as
+      // stale and fall through to create a new one.
+      if (!isCartCompleted(cart)) {
+        return cartId;
+      }
     } catch {
-      set({ cartId: null });
+      // cart not found or network error — fall through
     }
+    set({ cartId: null, items: [] });
   }
 
   if (!cartCreationPromise) {
@@ -136,9 +142,17 @@ export const useCart = create<CartState>()(
           try {
             await apiRemoveCartItem(cartId, id);
           } catch (err) {
-            console.error("Failed to remove item from Medusa cart:", err);
-            if (removedItem) {
-              set((s) => ({ items: [...s.items, removedItem] }));
+            const message = err instanceof Error ? err.message : String(err);
+            // If the cart was already completed (order placed), the local state
+            // has already been updated optimistically. Just clear the stale
+            // cartId so the next mutation starts with a fresh cart.
+            if (message.toLowerCase().includes("already completed")) {
+              set({ cartId: null, items: [] });
+            } else {
+              console.error("Failed to remove item from Medusa cart:", err);
+              if (removedItem) {
+                set((s) => ({ items: [...s.items, removedItem] }));
+              }
             }
           } finally {
             set({ removingItemId: null });

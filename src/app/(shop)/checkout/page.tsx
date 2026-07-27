@@ -26,7 +26,7 @@ import {
   setShippingMethod,
   listPaymentProviders,
   createPaymentCollection,
-  initiatePaymentSession,
+  ensurePaymentSession,
   completeCart,
   getRegions,
   type MedusaShippingOption,
@@ -180,18 +180,11 @@ export default function CheckoutPage() {
     setLoadingPayment(true);
     setError(null);
     try {
-      let collection = paymentCollection;
-      if (!collection) {
-        collection = await createPaymentCollection(cartId);
-        setPaymentCollection(collection);
-      }
-      try {
-        await initiatePaymentSession(collection.id, providerId);
-      } catch {
-        collection = await createPaymentCollection(cartId);
-        setPaymentCollection(collection);
-        await initiatePaymentSession(collection.id, providerId);
-      }
+      // ensurePaymentSession is idempotent: it re-uses an existing pending
+      // session for this provider rather than creating a duplicate (which
+      // causes Medusa to return a 409 conflict).
+      const { collection } = await ensurePaymentSession(cartId, providerId);
+      setPaymentCollection(collection);
     } catch (err) {
       console.error("Failed to initialize payment:", err);
       setError("Failed to initialize payment.");
@@ -215,6 +208,18 @@ export default function CheckoutPage() {
         setLoading(false);
         return;
       }
+
+      // Guard: ensure the payment session is active before completing.
+      // If the user refreshed the page or the session expired, re-initialise it.
+      const cartWithPayment = await getCart(cartId);
+      const hasActiveSession = cartWithPayment.payment_collection?.payment_sessions?.some(
+        (s) => s.provider_id === selectedPaymentProvider && s.status === "pending",
+      );
+      if (!hasActiveSession) {
+        const { collection } = await ensurePaymentSession(cartId, selectedPaymentProvider);
+        setPaymentCollection(collection);
+      }
+
       const result: MedusaCompleteCartResponse = await completeCart(cartId);
       if (result.type === "order") {
         setOrder(result.order);
