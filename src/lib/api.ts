@@ -432,7 +432,10 @@ const CATEGORY_ID_MAP: Record<string, string> = {
 };
 
 const CART_FIELDS =
-  "id,*items,items.id,items.title,items.quantity,items.unit_price,items.total,items.variant_id,items.variant,items.product,items.thumbnail,*items.variant,items.variant.id,items.variant.title,items.variant.product,items.variant.product.id,items.variant.product.title,items.variant.product.handle,items.variant.product.thumbnail,subtotal,total,currency_code,region_id,email,*shipping_address,*billing_address,*shipping_methods,*payment_collection";
+  "id,*items,items.id,items.title,items.quantity,items.unit_price,items.total,items.variant_id,items.variant,items.product,items.thumbnail,*items.variant,items.variant.id,items.variant.title,items.variant.product,items.variant.product.id,items.variant.product.title,items.variant.product.handle,items.variant.product.thumbnail,subtotal,total,currency_code,region_id,email,*shipping_address,*billing_address";
+
+const CART_FIELDS_WITH_PAYMENT =
+  "id,*items,items.id,items.title,items.quantity,items.unit_price,items.total,items.variant_id,items.variant,items.product,items.thumbnail,*items.variant,items.variant.id,items.variant.title,items.variant.product,items.variant.product.id,items.variant.product.title,items.variant.product.handle,items.variant.product.thumbnail,subtotal,total,currency_code,region_id,email,*shipping_address,*billing_address,payment_collection.id,payment_collection.cart_id,payment_collection.amount";
 
 const ORDER_FIELDS = "id,display_id,status,email,total";
 
@@ -641,10 +644,24 @@ export async function listPaymentProviders(
   return (payment_providers ?? []) as MedusaPaymentProvider[];
 }
 
+export async function getCartWithPaymentCollection(cartId: string): Promise<MedusaCart> {
+  const { cart } = await sdk.store.cart.retrieve(cartId, { fields: CART_FIELDS_WITH_PAYMENT });
+  return toMedusaCart(cart);
+}
+
 export async function createPaymentCollection(
   cartId: string,
-  retries = 3,
+  retries = 2,
 ): Promise<MedusaPaymentCollection> {
+  try {
+    const cart = await getCartWithPaymentCollection(cartId);
+    if (cart.payment_collection?.id) {
+      return cart.payment_collection;
+    }
+  } catch {
+    // ignore — will try to create below
+  }
+
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const result = await sdk.client.fetch<{ payment_collection: MedusaPaymentCollection }>(
@@ -656,6 +673,17 @@ export async function createPaymentCollection(
       );
       return result.payment_collection;
     } catch (err) {
+      const status = (err as { status?: number })?.status;
+      if (status === 409) {
+        try {
+          const cart = await getCartWithPaymentCollection(cartId);
+          if (cart.payment_collection?.id) {
+            return cart.payment_collection;
+          }
+        } catch {
+          // fall through to throw
+        }
+      }
       if (attempt < retries) {
         await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
         continue;

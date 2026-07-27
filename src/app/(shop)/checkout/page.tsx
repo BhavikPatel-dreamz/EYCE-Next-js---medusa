@@ -185,11 +185,18 @@ export default function CheckoutPage() {
         collection = await createPaymentCollection(cartId);
         setPaymentCollection(collection);
       }
-      await initiatePaymentSession(collection.id, providerId);
+      try {
+        await initiatePaymentSession(collection.id, providerId);
+      } catch {
+        collection = await createPaymentCollection(cartId);
+        setPaymentCollection(collection);
+        await initiatePaymentSession(collection.id, providerId);
+      }
     } catch (err) {
       console.error("Failed to initialize payment:", err);
       setError("Failed to initialize payment.");
       setSelectedPaymentProvider(null);
+      setPaymentCollection(null);
     } finally {
       setLoadingPayment(false);
     }
