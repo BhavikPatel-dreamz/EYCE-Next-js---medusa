@@ -765,7 +765,12 @@ export async function completeCart(
   cartId: string,
 ): Promise<MedusaCompleteCartResponse> {
   try {
-    const result = await sdk.store.cart.complete(cartId);
+    const result = await sdk.client.fetch<MedusaCompleteCartResponse>(
+      `/store/carts/${cartId}/complete`,
+      {
+        method: "POST",
+      },
+    );
     if (result?.type === "order") {
       return { type: "order", order: result.order as MedusaOrder };
     }
