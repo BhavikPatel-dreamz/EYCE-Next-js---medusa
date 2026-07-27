@@ -11,6 +11,7 @@ import {
   isCartCompleted,
   type MedusaCart,
 } from "@/lib/api";
+import { useToast } from "@/store/toast-store";
 import type { CartItem } from "@/types/cart";
 
 type CartState = {
@@ -23,7 +24,7 @@ type CartState = {
   open: () => void;
   close: () => void;
   toggle: () => void;
-  add: (item: Omit<CartItem, "quantity">, qty?: number) => Promise<void>;
+  add: (item: Omit<CartItem, "quantity">, qty?: number) => Promise<boolean>;
   remove: (id: string) => Promise<void>;
   update: (id: string, quantity: number) => Promise<void>;
   pendingMutations: () => Promise<void>;
@@ -105,6 +106,7 @@ export const useCart = create<CartState>()(
       toggle: () => set((s) => ({ isOpen: !s.isOpen })),
 
       add: async (item, qty = 1) => {
+        let success = false;
         mutationQueue = mutationQueue.then(async () => {
           set({ addingVariantId: item.variantId });
 
@@ -116,12 +118,15 @@ export const useCart = create<CartState>()(
               isOpen: true,
               addingVariantId: null,
             }));
+            success = true;
           } catch (err) {
             console.error("Failed to add item to Medusa cart:", err);
+            useToast.getState().add("Failed to add item to cart. Please try again.");
             set({ addingVariantId: null });
           }
         });
-        return mutationQueue;
+        await mutationQueue;
+        return success;
       },
 
       remove: async (id) => {
@@ -150,6 +155,7 @@ export const useCart = create<CartState>()(
               set({ cartId: null, items: [] });
             } else {
               console.error("Failed to remove item from Medusa cart:", err);
+              useToast.getState().add("Failed to remove item. Please try again.");
               if (removedItem) {
                 set((s) => ({ items: [...s.items, removedItem] }));
               }
@@ -182,6 +188,7 @@ export const useCart = create<CartState>()(
             await apiUpdateCartItem(cartId, id, quantity);
           } catch (err) {
             console.error("Failed to update cart item:", err);
+            useToast.getState().add("Failed to update quantity. Please try again.");
             if (prevItem) {
               set((s) => ({
                 items: s.items.map((i) => (i.id === id ? prevItem : i)),

@@ -262,6 +262,12 @@ export async function getProducts(opts?: {
       case "newest":
         params.order = "-created_at";
         break;
+      case "price-asc":
+      case "price-desc":
+      case "rating":
+        // Price and rating sorting handled client-side after fetch
+        params.order = "-created_at";
+        break;
       default:
         params.order = "-created_at";
         break;

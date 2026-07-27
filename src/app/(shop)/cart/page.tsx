@@ -11,8 +11,6 @@ import { formatPrice } from "@/lib/format";
 export default function CartPage() {
   const { items, update, remove, removingItemId } = useCart();
   const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
-  const shipping = subtotal > 60 || subtotal === 0 ? 0 : 8;
-  const total = subtotal + shipping;
 
   if (items.length === 0) {
     return (
@@ -69,12 +67,12 @@ export default function CartPage() {
           <div className="mb-2 font-mono text-xs uppercase tracking-[0.15em] text-muted-foreground">Order summary</div>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between"><span>Subtotal</span><span>{formatPrice(subtotal, items[0]?.currency)}</span></div>
-            <div className="flex justify-between"><span>Shipping</span><span>{shipping === 0 ? "Free" : formatPrice(shipping, items[0]?.currency)}</span></div>
+            <div className="flex justify-between"><span>Shipping</span><span className="text-muted-foreground">Calculated at checkout</span></div>
           </div>
           <Separator className="my-4" />
           <div className="flex items-baseline justify-between">
-            <span>Total</span>
-            <span className="font-display text-2xl font-bold">{formatPrice(total, items[0]?.currency)}</span>
+            <span>Subtotal</span>
+            <span className="font-display text-2xl font-bold">{formatPrice(subtotal, items[0]?.currency)}</span>
           </div>
           <Button asChild size="lg" className="mt-6 w-full"><Link href="/checkout">Checkout</Link></Button>
           <Button asChild variant="ghost" className="mt-2 w-full"><Link href="/shop">Continue shopping</Link></Button>

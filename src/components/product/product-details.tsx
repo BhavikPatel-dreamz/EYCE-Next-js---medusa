@@ -44,7 +44,7 @@ export function ProductDetails({ product }: { product: Product }) {
 
   const onBuyNow = async () => {
     if (!variant.inStock || isAdding) return;
-    await add(
+    const ok = await add(
       {
         id: `${product.id}:${variant.id}`,
         productId: product.id,
@@ -58,7 +58,7 @@ export function ProductDetails({ product }: { product: Product }) {
       },
       qty,
     );
-    router.push("/checkout");
+    if (ok) router.push("/checkout");
   };
 
   return (
