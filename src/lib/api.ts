@@ -765,7 +765,7 @@ export async function completeCart(
   cartId: string,
 ): Promise<MedusaCompleteCartResponse> {
   try {
-    const result = await sdk.store.cart.complete(cartId, { fields: ORDER_FIELDS });
+    const result = await sdk.store.cart.complete(cartId);
     if (result?.type === "order") {
       return { type: "order", order: result.order as MedusaOrder };
     }
