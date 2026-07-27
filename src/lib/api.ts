@@ -431,6 +431,11 @@ const CATEGORY_ID_MAP: Record<string, string> = {
   "accessories": "pcat_01KXZBYS74DYK5EPNEGYMJGA37",
 };
 
+const CART_FIELDS =
+  "id,*items,items.id,items.title,items.quantity,items.unit_price,items.total,items.variant_id,items.variant,items.product,items.thumbnail,*items.variant,items.variant.id,items.variant.title,items.variant.product,items.variant.product.id,items.variant.product.title,items.variant.product.handle,items.variant.product.thumbnail,subtotal,total,currency_code,region_id,email,*shipping_address,*billing_address,*shipping_methods,*payment_collection";
+
+const ORDER_FIELDS = "id,display_id,status,email,total";
+
 // ─── Cart types ──────────────────────────────────────────────────────────────
 
 export type MedusaCart = {
@@ -539,12 +544,13 @@ export async function createCart(): Promise<MedusaCart> {
   const regionId = await getDefaultRegionId();
   const { cart } = await sdk.store.cart.create(
     regionId ? { region_id: regionId } : {},
+    { fields: CART_FIELDS },
   );
   return toMedusaCart(cart);
 }
 
 export async function getCart(cartId: string): Promise<MedusaCart> {
-  const { cart } = await sdk.store.cart.retrieve(cartId);
+  const { cart } = await sdk.store.cart.retrieve(cartId, { fields: CART_FIELDS });
   return toMedusaCart(cart);
 }
 
@@ -556,7 +562,7 @@ export async function addToCart(
   const { cart } = await sdk.store.cart.createLineItem(cartId, {
     variant_id: variantId,
     quantity,
-  });
+  }, { fields: CART_FIELDS });
   return toMedusaCart(cart);
 }
 
@@ -567,7 +573,7 @@ export async function updateCartItem(
 ): Promise<MedusaCart> {
   const { cart } = await sdk.store.cart.updateLineItem(cartId, lineItemId, {
     quantity,
-  });
+  }, { fields: CART_FIELDS });
   return toMedusaCart(cart);
 }
 
@@ -576,7 +582,7 @@ export async function removeCartItem(
   lineItemId: string,
 ): Promise<MedusaCart> {
   await sdk.store.cart.deleteLineItem(cartId, lineItemId);
-  const { cart } = await sdk.store.cart.retrieve(cartId);
+  const { cart } = await sdk.store.cart.retrieve(cartId, { fields: CART_FIELDS });
   return toMedusaCart(cart);
 }
 
@@ -603,7 +609,7 @@ export async function updateCart(
     billing_address?: Omit<MedusaAddress, "id">;
   },
 ): Promise<MedusaCart> {
-  const { cart } = await sdk.store.cart.update(cartId, data);
+  const { cart } = await sdk.store.cart.update(cartId, data, { fields: CART_FIELDS });
   return toMedusaCart(cart);
 }
 
@@ -622,7 +628,7 @@ export async function setShippingMethod(
 ): Promise<MedusaCart> {
   const { cart } = await sdk.store.cart.addShippingMethod(cartId, {
     option_id: shippingOptionId,
-  });
+  }, { fields: CART_FIELDS });
   return toMedusaCart(cart);
 }
 
@@ -678,7 +684,7 @@ export async function completeCart(
   cartId: string,
 ): Promise<MedusaCompleteCartResponse> {
   try {
-    const result = await sdk.store.cart.complete(cartId);
+    const result = await sdk.store.cart.complete(cartId, { fields: ORDER_FIELDS });
     if (result?.type === "order") {
       return { type: "order", order: result.order as MedusaOrder };
     }
