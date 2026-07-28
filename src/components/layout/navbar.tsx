@@ -2,50 +2,61 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect } from "react";
-import { Heart, Menu, Search, ShoppingBag, X, ChevronDown, User } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Heart, Menu, Search, ShoppingBag, X, ChevronDown, ChevronRight, User, ArrowRight, Star } from "lucide-react";
 import { useCart } from "@/store/cart-store";
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { motion, AnimatePresence } from "framer-motion";
 
+const megaMenuData: Record<string, {
+  featured: { name: string; image: string; href: string; tag?: string }[];
+  columns: { title: string; links: { name: string; href: string }[] }[];
+}> = {
+  "Shop All": {
+    featured: [
+      { name: "Silicone Beaker Bong", image: "https://images.unsplash.com/photo-1618354691792-d1d42acfd860?w=400&auto=format&fit=crop&q=85", href: "/shop?category=bongs", tag: "Bestseller" },
+      { name: "Spark Rig II", image: "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=400&auto=format&fit=crop&q=85", href: "/shop?category=rigs", tag: "New" },
+      { name: "Hammer Pipe", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&auto=format&fit=crop&q=85", href: "/shop?category=pipes" },
+    ],
+    columns: [
+      { title: "Categories", links: [
+        { name: "All Products", href: "/shop" },
+        { name: "Bongs", href: "/shop?category=bongs" },
+        { name: "Dab Rigs", href: "/shop?category=rigs" },
+        { name: "Hand Pipes", href: "/shop?category=pipes" },
+        { name: "Accessories", href: "/shop?category=accessories" },
+      ]},
+      { title: "Shop By", links: [
+        { name: "New Arrivals", href: "/shop?sort=newest" },
+        { name: "Bestsellers", href: "/shop" },
+        { name: "On Sale", href: "/shop?onSale=1" },
+        { name: "All Collections", href: "/shop" },
+      ]},
+    ],
+  },
+  "Accessories": {
+    featured: [
+      { name: "Replacement Bowl", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&auto=format&fit=crop&q=85", href: "/shop?category=accessories" },
+      { name: "Quartz Banger", image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&auto=format&fit=crop&q=85", href: "/shop?category=accessories" },
+    ],
+    columns: [
+      { title: "Accessories", links: [
+        { name: "Replacement Bowls", href: "/shop?category=accessories" },
+        { name: "Quartz Bangers", href: "/shop?category=accessories" },
+        { name: "Stash Containers", href: "/shop?category=accessories" },
+        { name: "Cleaning Kits", href: "/shop?category=accessories" },
+      ]},
+    ],
+  },
+};
+
 const nav = [
-  {
-    label: "Shop All",
-    href: "/shop",
-    children: [
-      { name: "Silicone Beaker Bong", href: "/shop?category=bongs" },
-      { name: "Mini Beaker", href: "/shop?category=bongs" },
-      { name: "Dab Rigs", href: "/shop?category=rigs" },
-      { name: "Nectar Collectors", href: "/shop?category=rigs" },
-    ],
-  },
-  {
-    label: "Bongs",
-    href: "/shop?category=bongs",
-  },
-  {
-    label: "Rigs",
-    href: "/shop?category=rigs",
-  },
-  {
-    label: "Pipes",
-    href: "/shop?category=pipes",
-  },
-  {
-    label: "Accessories",
-    href: "/shop?category=accessories",
-    children: [
-      { name: "Replacement Bowls", href: "/shop?category=accessories" },
-      { name: "Quartz Bangers", href: "/shop?category=accessories" },
-      { name: "Stash Containers", href: "/shop?category=accessories" },
-      { name: "Cleaning Kits", href: "/shop?category=accessories" },
-    ],
-  },
-  {
-    label: "New",
-    href: "/shop?featured=true",
-    accent: true,
-  },
+  { label: "Shop All", href: "/shop", mega: true },
+  { label: "Bongs", href: "/shop?category=bongs" },
+  { label: "Rigs", href: "/shop?category=rigs" },
+  { label: "Pipes", href: "/shop?category=pipes" },
+  { label: "Accessories", href: "/shop?category=accessories", mega: true },
+  { label: "Blog", href: "/blog" },
 ];
 
 export function Navbar() {
@@ -54,6 +65,10 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -61,113 +76,206 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Lock body scroll when mobile nav is open
   useEffect(() => {
-    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    document.body.style.overflow = mobileOpen || searchOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
-  }, [mobileOpen]);
+  }, [mobileOpen, searchOpen]);
+
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus();
+  }, [searchOpen]);
+
+  const handleMouseEnter = (label: string) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setActiveDropdown(label);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => setActiveDropdown(null), 150);
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      window.location.href = `/shop?q=${encodeURIComponent(searchQuery.trim())}`;
+      setSearchOpen(false);
+      setSearchQuery("");
+    }
+  };
 
   return (
     <>
       <header
-        className={`sticky top-0 z-40 w-full transition-[background,box-shadow] duration-200 ${
+        className={`sticky top-0 z-40 w-full transition-all duration-300 ${
           scrolled
-            ? "bg-background/96 backdrop-blur-sm shadow-[0_1px_0_0_hsl(var(--border)/0.8)]"
-            : "bg-background/80 backdrop-blur-sm border-b border-border/60"
+            ? "bg-background/95 backdrop-blur-lg shadow-sm"
+            : "bg-background"
         }`}
       >
-        <div className="container-x flex h-16 items-center justify-between">
+        <div className="container-x flex h-16 items-center justify-between gap-4">
 
           {/* Left: Logo */}
-          <Link href="/" className="flex items-center shrink-0 mr-8">
+          <Link href="/" className="flex items-center shrink-0">
             <Image
               src="/images/logo.svg"
               alt="EYCE"
               width={140}
               height={40}
               priority
-              className="h-8 w-auto"
+              className="h-7 w-auto"
             />
           </Link>
 
           {/* Center: Desktop nav */}
-          <nav className="hidden lg:flex items-center gap-0.5 flex-1">
+          <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center">
             {nav.map((item) => (
               <div
                 key={item.label}
                 className="relative"
-                onMouseEnter={() => item.children && setActiveDropdown(item.label)}
-                onMouseLeave={() => setActiveDropdown(null)}
+                onMouseEnter={() => item.mega && handleMouseEnter(item.label)}
+                onMouseLeave={() => item.mega && handleMouseLeave()}
               >
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-1 px-3.5 py-2 text-[13.5px] font-medium rounded-md transition-colors ${
-                    item.accent
-                      ? "text-primary hover:text-primary/80"
-                      : "text-foreground/75 hover:text-foreground hover:bg-white/5"
+                  className={`flex items-center gap-1 px-3 py-2 text-[13px] font-medium rounded-lg transition-colors ${
+                    activeDropdown === item.label
+                      ? "text-foreground bg-surface"
+                      : "text-muted-foreground hover:text-foreground hover:bg-surface/50"
                   }`}
                 >
                   {item.label}
-                  {item.children && (
+                  {item.mega && (
                     <ChevronDown
-                      className={`size-3 text-foreground/40 transition-transform duration-150 ${
+                      className={`size-3 transition-transform duration-200 ${
                         activeDropdown === item.label ? "rotate-180" : ""
                       }`}
                     />
                   )}
                 </Link>
 
-                <AnimatePresence>
-                  {activeDropdown === item.label && item.children && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 4 }}
-                      transition={{ duration: 0.12, ease: "easeOut" }}
-                      className="absolute left-0 top-full mt-1 z-50 min-w-[200px]"
-                    >
-                      <div className="rounded-lg border border-border/80 bg-card shadow-lg shadow-black/30 py-1 overflow-hidden">
-                        {item.children.map((child) => (
-                          <Link
-                            key={child.name}
-                            href={child.href}
-                            className="block px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
-                          >
-                            {child.name}
-                          </Link>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {/* Mega Menu */}
+                {item.mega && megaMenuData[item.label] && (
+                  <AnimatePresence>
+                    {activeDropdown === item.label && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 4 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute left-1/2 -translate-x-1/2 top-full pt-3 z-50"
+                        onMouseEnter={() => handleMouseEnter(item.label)}
+                        onMouseLeave={handleMouseLeave}
+                      >
+                        <div className="w-[520px] rounded-xl border border-border bg-card shadow-xl shadow-black/5 overflow-hidden">
+                          <div className="p-6">
+                            <div className="flex gap-6">
+                              {/* Links */}
+                              <div className="flex-1 flex gap-6">
+                                {megaMenuData[item.label].columns.map((col) => (
+                                  <div key={col.title}>
+                                    <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
+                                      {col.title}
+                                    </div>
+                                    <ul className="space-y-1">
+                                      {col.links.map((link) => (
+                                        <li key={link.name}>
+                                          <Link
+                                            href={link.href}
+                                            className="block px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-surface rounded-md transition-colors"
+                                          >
+                                            {link.name}
+                                          </Link>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Featured */}
+                              <div className="w-[180px] shrink-0">
+                                <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
+                                  Featured
+                                </div>
+                                <div className="space-y-2.5">
+                                  {megaMenuData[item.label].featured.map((f) => (
+                                    <Link
+                                      key={f.name}
+                                      href={f.href}
+                                      className="group flex gap-3 rounded-lg p-2 hover:bg-surface transition-colors"
+                                    >
+                                      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg">
+                                        <Image
+                                          src={f.image}
+                                          alt={f.name}
+                                          fill
+                                          sizes="56px"
+                                          className="object-cover transition-transform duration-300 group-hover:scale-110"
+                                        />
+                                      </div>
+                                      <div className="flex flex-col justify-center min-w-0">
+                                        <span className="text-xs font-medium truncate group-hover:text-primary transition-colors">
+                                          {f.name}
+                                        </span>
+                                        {f.tag && (
+                                          <span className="mt-1 inline-flex w-fit items-center gap-0.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-semibold text-primary">
+                                            <Star className="size-2 fill-primary" />
+                                            {f.tag}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </Link>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Footer */}
+                          <div className="border-t border-border bg-surface/30 px-6 py-3">
+                            <Link
+                              href="/shop"
+                              className="flex items-center justify-between text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                              View all products
+                              <ArrowRight className="size-3.5" />
+                            </Link>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                )}
               </div>
             ))}
           </nav>
 
           {/* Right: Actions */}
-          <div className="flex items-center gap-1">
-            <Link
-              href="/search"
-              className="flex size-9 items-center justify-center rounded-md text-foreground/70 hover:text-foreground hover:bg-white/5 transition-colors"
+          <div className="flex items-center gap-0.5">
+            {/* Search trigger */}
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              className="flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface transition-colors"
               aria-label="Search"
             >
-              <Search className="size-4.5" />
-            </Link>
+              <Search className="size-[18px]" />
+            </button>
 
             <Link
               href="/account"
-              className="hidden sm:flex size-9 items-center justify-center rounded-md text-foreground/70 hover:text-foreground hover:bg-white/5 transition-colors"
+              className="hidden sm:flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface transition-colors"
               aria-label="Account"
             >
-              <User className="size-4.5" />
+              <User className="size-[18px]" />
             </Link>
 
             <Link
               href="/wishlist"
-              className="flex size-9 items-center justify-center rounded-md text-foreground/70 hover:text-foreground hover:bg-white/5 transition-colors"
+              className="flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface transition-colors"
               aria-label="Wishlist"
             >
-              <Heart className="size-4.5" />
+              <Heart className="size-[18px]" />
             </Link>
 
             {/* Cart */}
@@ -175,11 +283,11 @@ export function Navbar() {
               type="button"
               onClick={openCart}
               aria-label="Cart"
-              className="relative flex size-9 items-center justify-center rounded-md text-foreground/70 hover:text-foreground hover:bg-white/5 transition-colors"
+              className="relative flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface transition-colors"
             >
-              <ShoppingBag className="size-4.5" />
+              <ShoppingBag className="size-[18px]" />
               {count > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground leading-none">
+                <span className="absolute -right-0.5 -top-0.5 flex min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground leading-none">
                   {count}
                 </span>
               )}
@@ -190,20 +298,70 @@ export function Navbar() {
               type="button"
               onClick={() => setMobileOpen(true)}
               aria-label="Open menu"
-              className="lg:hidden ml-1 flex size-9 items-center justify-center rounded-md text-foreground/70 hover:text-foreground hover:bg-white/5 transition-colors"
+              className="lg:hidden ml-1 flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface transition-colors"
             >
               <Menu className="size-5" />
             </button>
           </div>
-
         </div>
       </header>
+
+      {/* Search Overlay */}
+      <AnimatePresence>
+        {searchOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-lg"
+            onClick={() => setSearchOpen(false)}
+          >
+            <div className="container-x pt-24" onClick={(e) => e.stopPropagation()}>
+              <form onSubmit={handleSearch} className="relative max-w-2xl mx-auto">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search products..."
+                  className="w-full h-14 rounded-xl border border-border bg-card pl-12 pr-14 text-lg font-display placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(false)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-surface text-muted-foreground"
+                >
+                  <X className="size-5" />
+                </button>
+              </form>
+              <div className="mt-6 max-w-2xl mx-auto">
+                <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
+                  Quick links
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {["Bongs", "Dab Rigs", "Hand Pipes", "Accessories", "New Arrivals", "On Sale"].map((term) => (
+                    <Link
+                      key={term}
+                      href={`/shop?q=${encodeURIComponent(term)}`}
+                      onClick={() => setSearchOpen(false)}
+                      className="rounded-full border border-border px-3.5 py-1.5 text-xs font-medium text-muted-foreground hover:border-foreground/30 hover:text-foreground transition-colors"
+                    >
+                      {term}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Mobile Nav */}
       <AnimatePresence>
         {mobileOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               key="backdrop"
               initial={{ opacity: 0 }}
@@ -211,17 +369,16 @@ export function Navbar() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
               onClick={() => setMobileOpen(false)}
-              className="fixed inset-0 z-50 bg-black/60 lg:hidden"
+              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm lg:hidden"
             />
 
-            {/* Drawer */}
             <motion.div
               key="drawer"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "tween", duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
-              className="fixed right-0 top-0 bottom-0 z-50 w-[300px] bg-background flex flex-col lg:hidden border-l border-border"
+              className="fixed right-0 top-0 bottom-0 z-50 w-[320px] bg-background flex flex-col lg:hidden border-l border-border shadow-2xl"
             >
               {/* Drawer header */}
               <div className="flex h-16 items-center justify-between px-5 border-b border-border/60">
@@ -229,28 +386,27 @@ export function Navbar() {
                 <button
                   type="button"
                   onClick={() => setMobileOpen(false)}
-                  className="flex size-9 items-center justify-center rounded-md text-foreground/60 hover:text-foreground hover:bg-white/5 transition-colors"
+                  className="flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface transition-colors"
                 >
                   <X className="size-5" />
                 </button>
               </div>
 
               {/* Nav links */}
-              <nav className="flex-1 overflow-y-auto py-4">
+              <nav className="flex-1 overflow-y-auto py-3">
                 {nav.map((item) => (
                   <div key={item.label}>
                     <Link
                       href={item.href}
                       onClick={() => setMobileOpen(false)}
-                      className={`flex items-center justify-between px-5 py-3 text-sm font-medium transition-colors hover:bg-white/5 ${
-                        item.accent ? "text-primary" : "text-foreground/80"
-                      }`}
+                      className="flex items-center justify-between px-5 py-3 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-surface transition-colors"
                     >
                       {item.label}
+                      <ChevronRight className="size-4 text-muted-foreground" />
                     </Link>
-                    {item.children && (
-                      <div className="bg-white/[0.02] border-y border-border/40 py-1.5 mb-1">
-                        {item.children.map((child) => (
+                    {item.mega && megaMenuData[item.label] && (
+                      <div className="bg-surface/30 border-y border-border/30 py-1.5 mb-1">
+                        {megaMenuData[item.label].columns.flatMap((col) => col.links).slice(0, 4).map((child) => (
                           <Link
                             key={child.name}
                             href={child.href}
@@ -267,18 +423,18 @@ export function Navbar() {
               </nav>
 
               {/* Bottom actions */}
-              <div className="border-t border-border/60 px-5 py-4 flex flex-col gap-2">
+              <div className="border-t border-border/60 px-5 py-4 flex flex-col gap-1">
                 <Link
                   href="/account"
                   onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center gap-3 py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-surface px-2"
                 >
                   <User className="size-4" /> My Account
                 </Link>
                 <Link
                   href="/wishlist"
                   onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center gap-3 py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-surface px-2"
                 >
                   <Heart className="size-4" /> Wishlist
                 </Link>

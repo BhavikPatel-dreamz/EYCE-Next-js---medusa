@@ -1,5 +1,23 @@
 import type { Product, Category, Collection } from "@/types/product";
 
+// Deterministic pseudo-random rating based on product ID
+function generateRating(id: string): number {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = ((hash << 5) - hash + id.charCodeAt(i)) | 0;
+  }
+  const base = 4.0 + (Math.abs(hash) % 10) / 10; // 4.0 - 4.9
+  return Math.round(base * 10) / 10;
+}
+
+function generateReviewCount(id: string): number {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = ((hash << 7) - hash + id.charCodeAt(i)) | 0;
+  }
+  return 20 + (Math.abs(hash) % 180); // 20 - 199 reviews
+}
+
 const MEDUSA_BACKEND_URL = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL;
 const MEDUSA_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY!;
 const MEDUSA_SALES_CHANNEL_ID = process.env.NEXT_PUBLIC_VAPE_SALES_CHANNEL_ID!;
@@ -149,8 +167,8 @@ function medusaToProduct(p: MedusaProduct): Product {
     price,
     compareAtPrice: compareAt ?? undefined,
     currency,
-    rating: (p.metadata?.rating as number) || 0,
-    reviewCount: (p.metadata?.review_count as number) || 0,
+    rating: (p.metadata?.rating as number) || generateRating(p.id),
+    reviewCount: (p.metadata?.review_count as number) || generateReviewCount(p.id),
     images: p.images?.map((img) => img.url) || (p.thumbnail ? [p.thumbnail] : []),
     variants:
       p.variants?.map((v) => {

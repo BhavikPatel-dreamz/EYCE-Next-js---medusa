@@ -41,7 +41,7 @@ export function Hero({ product }: { product?: Product | null }) {
             </Link>
             <Link
               href="/shop?category=bongs"
-              className="hero-cta inline-flex items-center rounded-md border border-border px-6 py-3 text-sm font-medium text-foreground hover:border-foreground/40 hover:bg-white/5 transition-colors opacity-0"
+              className="hero-cta inline-flex items-center rounded-md border border-border px-6 py-3 text-sm font-medium text-foreground hover:border-foreground/40 hover:bg-black/5 transition-colors opacity-0"
             >
               Bongs &amp; Rigs
             </Link>

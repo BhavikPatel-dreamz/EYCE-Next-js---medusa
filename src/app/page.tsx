@@ -8,6 +8,7 @@ import { Newsletter } from "@/components/home/newsletter";
 import { TechShowcase } from "@/components/home/tech-showcase";
 import { TrustBadges } from "@/components/home/trust-badges";
 import { InstagramCommunity } from "@/components/home/instagram-community";
+import { BlogSection } from "@/components/home/blog-section";
 import { getProducts, getCategories } from "@/lib/api";
 
 export default async function HomePage() {
@@ -25,6 +26,7 @@ export default async function HomePage() {
       <TechShowcase />
       <FeaturedGrid />
       <EditorialSplit />
+      <BlogSection />
       <Testimonials />
       <InstagramCommunity />
       <Newsletter />

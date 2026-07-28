@@ -25,7 +25,7 @@ export function Toaster() {
             <span className="text-sm leading-relaxed">{t.message}</span>
             <button
               onClick={() => remove(t.id)}
-              className="shrink-0 mt-0.5 rounded p-0.5 hover:bg-white/10 transition-colors"
+              className="shrink-0 mt-0.5 rounded p-0.5 hover:bg-black/10 transition-colors"
             >
               <X className="size-3.5" />
             </button>
