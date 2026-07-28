@@ -1,0 +1,51 @@
+<svg width="140" height="40" viewBox="0 0 140 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad-e1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ade80" />
+      <stop offset="100%" stop-color="#16a34a" />
+    </linearGradient>
+    <linearGradient id="grad-y" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+    <linearGradient id="grad-c" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f472b6" />
+      <stop offset="100%" stop-color="#db2777" />
+    </linearGradient>
+    <linearGradient id="grad-e2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#facc15" />
+      <stop offset="100%" stop-color="#ca8a04" />
+    </linearGradient>
+  </defs>
+
+  <!-- Geometric lettermark: E Y C E — each letter a different color -->
+  <g transform="translate(8, 6)">
+    <!-- E (green) -->
+    <g fill="url(#grad-e1)">
+      <rect x="0" y="0" width="16" height="3.5" rx="1" />
+      <rect x="0" y="0" width="3.5" height="28" rx="1" />
+      <rect x="0" y="12.25" width="12" height="3.5" rx="1" />
+      <rect x="0" y="24.5" width="16" height="3.5" rx="1" />
+    </g>
+
+    <!-- Y (blue) -->
+    <g fill="url(#grad-y)">
+      <polygon points="24,0 28,0 32.5,12 37,0 41,0 34.5,16 34.5,28 30.5,28 30.5,16" />
+    </g>
+
+    <!-- C (pink) -->
+    <g fill="url(#grad-c)">
+      <rect x="48" y="0" width="16" height="3.5" rx="1" />
+      <rect x="48" y="0" width="3.5" height="28" rx="1" />
+      <rect x="48" y="24.5" width="16" height="3.5" rx="1" />
+    </g>
+
+    <!-- E (gold) -->
+    <g fill="url(#grad-e2)">
+      <rect x="72" y="0" width="16" height="3.5" rx="1" />
+      <rect x="72" y="0" width="3.5" height="28" rx="1" />
+      <rect x="72" y="12.25" width="12" height="3.5" rx="1" />
+      <rect x="72" y="24.5" width="16" height="3.5" rx="1" />
+    </g>
+  </g>
+</svg>

@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "www.eyce.com" },
       { protocol: "https", hostname: "medusa.dynamicdreamz.com" },
+      { protocol: "https", hostname: "i.pravatar.cc" },
     ],
   },
   async rewrites() {

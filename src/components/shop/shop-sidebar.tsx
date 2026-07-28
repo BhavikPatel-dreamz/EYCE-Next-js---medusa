@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronDown, Check } from "lucide-react";
 import type { Category, Collection } from "@/types/product";
 import { PriceRangeSlider } from "./price-range-slider";
 
@@ -26,62 +26,48 @@ export function ShopSidebar({
       {sp.q && <input type="hidden" name="q" value={sp.q} />}
 
       <SidebarFilterSection title="Categories" defaultOpen>
-        <div className="space-y-1">
-          <label className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted">
-            <input
-              type="radio"
-              name="category"
-              value=""
-              defaultChecked={!sp.category}
-              className="size-4 border-border accent-primary"
-            />
-            All
-          </label>
+        <div className="space-y-0.5">
+          <SidebarRadio
+            name="category"
+            value=""
+            defaultChecked={!sp.category}
+            label="All products"
+          />
           {cats.map((c) => (
-            <label key={c.slug} className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted">
-              <input
-                type="radio"
-                name="category"
-                value={c.slug}
-                defaultChecked={sp.category === c.slug}
-                className="size-4 border-border accent-primary"
-              />
-              {c.name}
-            </label>
+            <SidebarRadio
+              key={c.slug}
+              name="category"
+              value={c.slug}
+              defaultChecked={sp.category === c.slug}
+              label={c.name}
+            />
           ))}
         </div>
       </SidebarFilterSection>
 
       {collections.length > 0 && (
         <SidebarFilterSection title="Collections">
-          <div className="space-y-1">
-            <label className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted">
-              <input
-                type="radio"
-                name="collection"
-                value=""
-                defaultChecked={!sp.collection}
-                className="size-4 border-border accent-primary"
-              />
-              All
-            </label>
+          <div className="space-y-0.5">
+            <SidebarRadio
+              name="collection"
+              value=""
+              defaultChecked={!sp.collection}
+              label="All collections"
+            />
             {collections.map((col) => (
-              <label key={col.slug} className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted">
-                <input
-                  type="radio"
-                  name="collection"
-                  value={col.slug}
-                  defaultChecked={sp.collection === col.slug}
-                  className="size-4 border-border accent-primary"
-                />
-                {col.name}
-              </label>
+              <SidebarRadio
+                key={col.slug}
+                name="collection"
+                value={col.slug}
+                defaultChecked={sp.collection === col.slug}
+                label={col.name}
+              />
             ))}
           </div>
         </SidebarFilterSection>
       )}
 
-      <SidebarFilterSection title="Price Range">
+      <SidebarFilterSection title="Price Range" defaultOpen>
         <PriceRangeSlider
           min={priceMin}
           max={priceMax}
@@ -90,40 +76,90 @@ export function ShopSidebar({
         />
       </SidebarFilterSection>
 
-      <SidebarFilterSection title="Availability">
-        <div className="space-y-1">
-          <label className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted">
-            <input
-              type="checkbox"
-              name="inStock"
-              value="1"
-              defaultChecked={sp.inStock === "1"}
-              className="size-4 rounded border-border accent-primary"
-            />
-            In Stock
-          </label>
-          <label className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted">
-            <input
-              type="checkbox"
-              name="onSale"
-              value="1"
-              defaultChecked={sp.onSale === "1"}
-              className="size-4 rounded border-border accent-primary"
-            />
-            On Sale
-          </label>
+      <SidebarFilterSection title="Availability" defaultOpen>
+        <div className="space-y-0.5">
+          <SidebarCheckbox
+            name="inStock"
+            value="1"
+            defaultChecked={sp.inStock === "1"}
+            label="In Stock"
+          />
+          <SidebarCheckbox
+            name="onSale"
+            value="1"
+            defaultChecked={sp.onSale === "1"}
+            label="On Sale"
+          />
         </div>
       </SidebarFilterSection>
 
-      <div className="border-t border-border pt-6">
+      <div className="border-t border-border pt-6 mt-6">
         <button
           type="submit"
-          className="w-full rounded-full bg-primary px-4 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+          className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
         >
           Apply Filters
         </button>
       </div>
     </form>
+  );
+}
+
+function SidebarRadio({
+  name,
+  value,
+  defaultChecked,
+  label,
+}: {
+  name: string;
+  value: string;
+  defaultChecked: boolean;
+  label: string;
+}) {
+  return (
+    <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-surface hover:text-foreground">
+      <span className="relative flex size-4 shrink-0 items-center justify-center">
+        <input
+          type="radio"
+          name={name}
+          value={value}
+          defaultChecked={defaultChecked}
+          className="peer sr-only"
+        />
+        <span className="size-4 rounded-full border border-border peer-checked:border-primary transition-colors" />
+        <Check className="absolute size-2.5 text-primary opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth={3} />
+      </span>
+      {label}
+    </label>
+  );
+}
+
+function SidebarCheckbox({
+  name,
+  value,
+  defaultChecked,
+  label,
+}: {
+  name: string;
+  value: string;
+  defaultChecked: boolean;
+  label: string;
+}) {
+  return (
+    <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-surface hover:text-foreground">
+      <span className="relative flex size-4 shrink-0 items-center justify-center">
+        <input
+          type="checkbox"
+          name={name}
+          value={value}
+          defaultChecked={defaultChecked}
+          className="peer sr-only"
+        />
+        <span className="size-4 rounded border border-border peer-checked:border-primary peer-checked:bg-primary transition-colors" />
+        <Check className="absolute size-2.5 text-primary-foreground opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth={3} />
+      </span>
+      {label}
+    </label>
   );
 }
 
@@ -139,24 +175,24 @@ function SidebarFilterSection({
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="border-t border-border pt-6">
+    <div className="border-t border-border pt-5">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors"
+        className="flex w-full items-center justify-between py-1 font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground hover:text-foreground transition-colors"
       >
         {title}
-        <ChevronRight
-          className={`size-4 shrink-0 transition-transform duration-200 ${open ? "rotate-90" : ""}`}
+        <ChevronDown
+          className={`size-4 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
         />
       </button>
       <div
         className={`grid transition-all duration-200 ease-in-out ${
-          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+          open ? "grid-rows-[1fr] opacity-100 mt-3" : "grid-rows-[0fr] opacity-0"
         }`}
       >
         <div className="overflow-hidden">
-          <div className="pt-4">{children}</div>
+          <div>{children}</div>
         </div>
       </div>
     </div>

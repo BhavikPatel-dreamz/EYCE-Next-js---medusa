@@ -86,3 +86,11 @@
   background-size: 400px 100%;
   animation: shimmer 2.4s infinite;
 }
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-33.333%); }
+}
+.animate-marquee {
+  animation: marquee 32s linear infinite;
+}

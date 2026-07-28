@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getCategories, getCollections, getProducts } from "@/lib/api";
 import { ProductCard } from "@/components/product/product-card";
 import { ShopToolbar } from "@/components/shop/shop-toolbar";
+import { ChevronRight } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Shop all",
@@ -41,70 +42,140 @@ export default async function ShopPage({
   const totalPages = Math.ceil(filtered.length / perPage);
   const products = filtered.slice((page - 1) * perPage, page * perPage);
   const active = sp.category;
+  const activeCatName = active ? cats.find((c) => c.slug === active)?.name : null;
 
   return (
-    <div className="container-x py-14">
-      <div className="mb-10">
-        <div className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Collection</div>
-        <h1 className="mt-2 font-display text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
-          {active ? cats.find((c) => c.slug === active)?.name ?? "Shop" : "Shop all"}
-        </h1>
+    <div className="min-h-screen">
+      {/* Breadcrumb */}
+      <div className="border-b border-border/60 bg-background">
+        <div className="container-x py-3">
+          <nav className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
+            <ChevronRight className="size-3" />
+            <span className="text-foreground font-medium">
+              {activeCatName ?? "Shop"}
+            </span>
+          </nav>
+        </div>
       </div>
 
-      <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
-        <div className="flex-1 min-w-0">
-          <ShopToolbar
-            cats={cats}
-            collections={collections}
-            sp={sp as Record<string, string | undefined>}
-            priceMin={priceMin}
-            priceMax={priceMax}
-            totalProducts={filtered.length}
-          />
-
-          {products.length === 0 ? (
-            <div className="py-24 text-center text-muted-foreground">No products found.</div>
-          ) : (
-            <>
-              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                {products.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
-              </div>
-              {totalPages > 1 && (
-                <nav className="mt-12 flex items-center justify-center gap-2">
-                  {page > 1 && (
-                    <Link
-                      href={buildHref({ ...sp, page: page - 1 })}
-                      className="rounded-full border border-border px-4 py-2 text-xs font-medium hover:bg-muted transition-colors"
-                    >
-                      &larr; Prev
-                    </Link>
-                  )}
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                    <Link
-                      key={p}
-                      href={buildHref({ ...sp, page: p })}
-                      className={`rounded-full px-4 py-2 text-xs font-medium transition-colors ${
-                        p === page
-                          ? "bg-primary text-primary-foreground"
-                          : "border border-border hover:bg-muted"
-                      }`}
-                    >
-                      {p}
-                    </Link>
-                  ))}
-                  {page < totalPages && (
-                    <Link
-                      href={buildHref({ ...sp, page: page + 1 })}
-                      className="rounded-full border border-border px-4 py-2 text-xs font-medium hover:bg-muted transition-colors"
-                    >
-                      Next &rarr;
-                    </Link>
-                  )}
-                </nav>
-              )}
-            </>
-          )}
+      {/* Hero Banner */}
+      <div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-br from-surface via-background to-surface">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--color-primary)_0%,transparent_50%)] opacity-[0.07]" />
+        <div className="container-x relative py-12 md:py-16">
+          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-primary mb-3">
+            {activeCatName ? "Category" : "Collection"}
+          </div>
+          <h1 className="font-display text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
+            {activeCatName ?? "Shop all"}
+          </h1>
+          <p className="mt-3 max-w-lg text-sm text-muted-foreground leading-relaxed">
+            {activeCatName
+              ? `Browse our ${activeCatName.toLowerCase()} collection. Silicone-first, built to last.`
+              : "Silicone-first gear built to survive anything. Bongs, rigs, pipes, and accessories with a lifetime warranty."
+            }
+          </p>
+          <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="font-mono">{filtered.length}</span>
+            <span>product{filtered.length !== 1 && "s"}</span>
+          </div>
         </div>
+      </div>
+
+      {/* Category Quick Links */}
+      {!active && (
+        <div className="border-b border-border/60 bg-background/50">
+          <div className="container-x py-3">
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+              <Link
+                href="/shop"
+                className="shrink-0 rounded-full bg-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground transition-colors"
+              >
+                All
+              </Link>
+              {cats.map((c) => (
+                <Link
+                  key={c.slug}
+                  href={`/shop?category=${c.slug}`}
+                  className="shrink-0 rounded-full border border-border px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
+                >
+                  {c.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="container-x py-8">
+        <ShopToolbar
+          cats={cats}
+          collections={collections}
+          sp={sp as Record<string, string | undefined>}
+          priceMin={priceMin}
+          priceMax={priceMax}
+          totalProducts={filtered.length}
+        />
+
+        {products.length === 0 ? (
+          <div className="py-24 text-center">
+            <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-surface">
+              <svg className="size-8 text-muted-foreground" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+              </svg>
+            </div>
+            <p className="font-display text-xl font-bold">No products found</p>
+            <p className="mt-2 text-sm text-muted-foreground">Try adjusting your filters or search term.</p>
+            <Link
+              href="/shop"
+              className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              View all products
+            </Link>
+          </div>
+        ) : (
+          <>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {products.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <nav className="mt-14 flex items-center justify-center gap-1.5">
+                {page > 1 && (
+                  <Link
+                    href={buildHref({ ...sp, page: page - 1 })}
+                    className="flex h-10 items-center rounded-lg border border-border px-4 text-xs font-medium text-muted-foreground hover:bg-surface hover:text-foreground transition-colors"
+                  >
+                    ← Prev
+                  </Link>
+                )}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <Link
+                    key={p}
+                    href={buildHref({ ...sp, page: p })}
+                    className={`flex h-10 w-10 items-center justify-center rounded-lg text-xs font-medium transition-colors ${
+                      p === page
+                        ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                        : "border border-border text-muted-foreground hover:bg-surface hover:text-foreground"
+                    }`}
+                  >
+                    {p}
+                  </Link>
+                ))}
+                {page < totalPages && (
+                  <Link
+                    href={buildHref({ ...sp, page: page + 1 })}
+                    className="flex h-10 items-center rounded-lg border border-border px-4 text-xs font-medium text-muted-foreground hover:bg-surface hover:text-foreground transition-colors"
+                  >
+                    Next →
+                  </Link>
+                )}
+              </nav>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
