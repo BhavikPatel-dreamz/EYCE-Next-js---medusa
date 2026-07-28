@@ -87,7 +87,7 @@ export function EditorialSplit() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-20 border-y border-border/60">
+    <section ref={sectionRef} className="py-20">
       <div className="container-x">
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-20 items-center">
 

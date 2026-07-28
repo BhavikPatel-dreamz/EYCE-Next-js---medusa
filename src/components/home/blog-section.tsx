@@ -52,7 +52,7 @@ export function BlogSection() {
   const [featured, ...rest] = blogPosts;
 
   return (
-    <section ref={sectionRef} className="py-20 bg-background">
+    <section ref={sectionRef} className="py-20">
       <div className="container-x">
         {/* Header */}
         <div ref={headerRef} className="flex items-end justify-between gap-6 mb-10 opacity-0">

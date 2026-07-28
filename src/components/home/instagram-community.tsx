@@ -91,7 +91,7 @@ export function InstagramCommunity() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-20 bg-background">
+    <section ref={sectionRef} className="py-20">
       <div className="container-x">
         {/* Header */}
         <div ref={headerRef} className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-8 opacity-0">

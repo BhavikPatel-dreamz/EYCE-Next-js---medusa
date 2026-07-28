@@ -57,7 +57,7 @@ export function TrustBadges() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="border-b border-border/80 bg-background py-16">
+    <section ref={sectionRef} className="border-b border-border/40 py-16">
       <div className="container-x">
         <div ref={cardsRef} className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {benefits.map((b) => {

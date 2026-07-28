@@ -52,7 +52,7 @@ const testimonials = [
 
 export function Testimonials() {
   return (
-    <section className="py-24 bg-background">
+    <section className="py-24">
       <div className="container-x">
         {/* Header */}
         <div className="text-center mb-14">

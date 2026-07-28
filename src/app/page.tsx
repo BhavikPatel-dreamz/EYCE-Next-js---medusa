@@ -21,16 +21,42 @@ export default async function HomePage() {
   return (
     <>
       <Hero product={heroProduct} />
-      <TrustBadges />
-      <Categories categories={categories} />
-      <TechShowcase />
-      <FeaturedGrid />
-      <EditorialSplit />
-      <BlogSection />
-      <Testimonials />
-      <InstagramCommunity />
-      <Newsletter />
+
+      <div className="bg-gradient-to-b from-emerald-100 to-emerald-50/0">
+        <TrustBadges />
+      </div>
+
+      <div className="bg-gradient-to-b from-sky-100 to-sky-50/0">
+        <Categories categories={categories} />
+      </div>
+
+      <div className="bg-gradient-to-b from-violet-100 via-indigo-100 to-violet-50/0">
+        <TechShowcase />
+      </div>
+
+      <div className="bg-gradient-to-b from-amber-100 to-amber-50/0">
+        <FeaturedGrid />
+      </div>
+
+      <div className="bg-gradient-to-b from-rose-100 via-pink-100 to-rose-50/0">
+        <EditorialSplit />
+      </div>
+
+      <div className="bg-gradient-to-b from-teal-100 to-teal-50/0">
+        <BlogSection />
+      </div>
+
+      <div className="bg-gradient-to-b from-orange-100 to-orange-50/0">
+        <Testimonials />
+      </div>
+
+      <div className="bg-gradient-to-b from-fuchsia-100 via-purple-100 to-fuchsia-50/0">
+        <InstagramCommunity />
+      </div>
+
+      <div className="bg-gradient-to-b from-lime-100 to-emerald-100">
+        <Newsletter />
+      </div>
     </>
   );
 }
-

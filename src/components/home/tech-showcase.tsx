@@ -79,7 +79,7 @@ export function TechShowcase() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="border-y border-border/60 bg-surface/20 py-20">
+    <section ref={sectionRef} className="py-20">
       <div className="container-x">
         <div ref={headerRef} className="mb-12 max-w-xl opacity-0">
           <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground mb-3">

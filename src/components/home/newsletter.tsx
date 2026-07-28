@@ -35,7 +35,7 @@ export function Newsletter() {
   }, []);
 
   return (
-    <section className="py-20 bg-background">
+    <section className="py-20">
       <div className="container-x">
         <div
           ref={sectionRef}
