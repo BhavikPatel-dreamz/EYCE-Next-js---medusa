@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
-import { Heart, Menu, Search, ShoppingBag, X, ChevronDown, ChevronRight, User, ArrowRight, Star } from "lucide-react";
+import { Heart, Menu, Search, ShoppingBag, X, ChevronDown, ChevronRight, User, ArrowRight, Star, Package, Zap, Droplets, Wrench } from "lucide-react";
 import { useCart } from "@/store/cart-store";
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { motion, AnimatePresence } from "framer-motion";
@@ -110,7 +110,7 @@ export function Navbar() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      window.location.href = `/shop?q=${encodeURIComponent(searchQuery.trim())}`;
+      window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`;
       setSearchOpen(false);
       setSearchQuery("");
     }
@@ -266,14 +266,13 @@ export function Navbar() {
           {/* Right: Actions */}
           <div className="flex items-center gap-0.5">
             {/* Search trigger */}
-            <button
-              type="button"
-              onClick={() => setSearchOpen(true)}
+            <Link
+              href="/search"
               className="flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface transition-colors"
               aria-label="Search"
             >
               <Search className="size-[18px]" />
-            </button>
+            </Link>
 
             <Link
               href="/account"
@@ -354,32 +353,48 @@ export function Navbar() {
                 <div className="mt-8 max-w-2xl mx-auto grid gap-8 sm:grid-cols-2">
                   <div>
                     <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
-                      Trending searches
+                      Popular categories
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {["Disposable Vapes", "Pod Systems", "E-Liquid", "Starter Kits", "Geek Bar", "Elf Bar"].map((term) => (
-                        <Link
-                          key={term}
-                          href={`/shop?q=${encodeURIComponent(term)}`}
-                          onClick={() => setSearchOpen(false)}
-                          className="rounded-full border border-border px-3.5 py-1.5 text-xs font-medium text-muted-foreground hover:border-foreground/30 hover:text-foreground transition-colors"
-                        >
-                          {term}
-                        </Link>
-                      ))}
+                    <div className="space-y-1">
+                      {[
+                        { name: "Vaporizers", slug: "vaporizers", icon: Zap },
+                        { name: "Pods & Mods", slug: "pods-and-mods", icon: Package },
+                        { name: "E-Liquids", slug: "e-liquids", icon: Droplets },
+                        { name: "Accessories", slug: "accessories", icon: Wrench },
+                      ].map((cat) => {
+                        const Icon = cat.icon;
+                        return (
+                          <Link
+                            key={cat.slug}
+                            href={`/shop?category=${cat.slug}`}
+                            onClick={() => setSearchOpen(false)}
+                            className="flex items-center gap-3 px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-surface rounded-lg transition-colors"
+                          >
+                            <Icon className="size-4 text-primary" />
+                            {cat.name}
+                          </Link>
+                        );
+                      })}
+                      <Link
+                        href="/shop"
+                        onClick={() => setSearchOpen(false)}
+                        className="block px-2 py-1.5 text-sm font-medium text-primary hover:bg-surface rounded-lg transition-colors"
+                      >
+                        Browse all →
+                      </Link>
                     </div>
                   </div>
                   <div>
                     <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
-                      Popular categories
+                      Quick links
                     </div>
-                    <div className="space-y-1">
-                      {["Disposable", "Pods", "E-Liquids", "Accessories", "New Arrivals", "On Sale"].map((term) => (
+                    <div className="flex flex-wrap gap-2">
+                      {["New arrivals", "Best sellers", "On sale", "Silicone", "Gift cards", "Bundles"].map((term) => (
                         <Link
                           key={term}
-                          href={`/shop?q=${encodeURIComponent(term)}`}
+                          href={`/search?q=${encodeURIComponent(term)}`}
                           onClick={() => setSearchOpen(false)}
-                          className="block px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-surface rounded-lg transition-colors"
+                          className="rounded-full border border-border px-3.5 py-1.5 text-xs font-medium text-muted-foreground hover:border-foreground/30 hover:text-foreground transition-colors"
                         >
                           {term}
                         </Link>
@@ -392,7 +407,7 @@ export function Navbar() {
               {searchQuery && (
                 <div className="mt-6 max-w-2xl mx-auto">
                   <Link
-                    href={`/shop?q=${encodeURIComponent(searchQuery)}`}
+                    href={`/search?q=${encodeURIComponent(searchQuery)}`}
                     onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
                     className="flex items-center justify-between rounded-xl border border-border p-4 hover:bg-surface transition-colors group"
                   >
@@ -477,6 +492,13 @@ export function Navbar() {
 
               {/* Bottom actions */}
               <div className="border-t border-border/60 px-5 py-4 flex flex-col gap-1">
+                <Link
+                  href="/search"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-3 py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-surface px-2"
+                >
+                  <Search className="size-4" /> Search
+                </Link>
                 <Link
                   href="/account"
                   onClick={() => setMobileOpen(false)}

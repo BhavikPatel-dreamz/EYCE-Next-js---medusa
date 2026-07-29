@@ -64,6 +64,13 @@ export function HeroSlider({ products }: { products?: Product[] }) {
 
   return (
     <section className="relative overflow-hidden bg-background">
+      <video
+        autoPlay muted loop playsInline
+        preload="metadata"
+        className="absolute inset-0 size-full object-cover opacity-20"
+      >
+        <source src="https://www.eyce.com/cdn/shop/videos/c/vp/76845b7ddce4478f917e513764c33ebc/76845b7ddce4478f917e513764c33ebc.HD-720p-1.6Mbps-18896941.mp4" type="video/mp4" />
+      </video>
       <div className={cn("relative", slide.bg)}>
         {/* Decorative elements */}
         <div className="pointer-events-none absolute -left-32 -top-32 size-96 rounded-full bg-primary/15 blur-3xl animate-float-slow" />
@@ -151,7 +158,7 @@ export function HeroSlider({ products }: { products?: Product[] }) {
               </motion.div>
             </div>
 
-            {/* Right — Image */}
+            {/* Right — Image / Video */}
             <motion.div
               key={`img-${current}`}
               initial={{ opacity: 0, scale: 0.95 }}

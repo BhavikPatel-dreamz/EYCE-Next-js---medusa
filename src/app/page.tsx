@@ -7,6 +7,7 @@ import { FlashSale } from "@/components/home/flash-sale";
 import { TestimonialsCarousel } from "@/components/home/testimonials-carousel";
 import { FAQSection } from "@/components/home/faq-section";
 import { Newsletter } from "@/components/home/newsletter";
+import { VideoBanner } from "@/components/home/video-banner";
 import { getProducts, getCategories } from "@/lib/api";
 
 export default async function HomePage() {
@@ -52,6 +53,8 @@ export default async function HomePage() {
         />
       </div>
 
+      <VideoBanner video="https://www.eyce.com/cdn/shop/videos/c/vp/7f898fd263de48febbe8c25d20ec8a55/7f898fd263de48febbe8c25d20ec8a55.HD-1080p-4.8Mbps-18134283.mp4" />
+
       <div className="section-gradient-3 relative">
         <div className="pointer-events-none absolute -left-28 -top-20 size-72 rounded-full bg-rose/10 blur-3xl" />
         <ProductSection
@@ -72,6 +75,8 @@ export default async function HomePage() {
         />
       </div>
 
+      <VideoBanner video="https://www.eyce.com/cdn/shop/videos/c/vp/5aff0abdf5b942caaa2c1a71aa16f915/5aff0abdf5b942caaa2c1a71aa16f915.HD-1080p-4.8Mbps-87994428.mp4" />
+
       <div className="section-gradient-5 relative">
         <div className="pointer-events-none absolute -left-32 top-1/2 size-80 rounded-full bg-teal/10 blur-3xl" />
         <ProductSection
@@ -82,6 +87,8 @@ export default async function HomePage() {
       </div>
 
       <ValuePropsSection />
+
+      <VideoBanner video="https://www.eyce.com/cdn/shop/videos/c/vp/58ae12f6907f4d00a3f4d6731333f532/58ae12f6907f4d00a3f4d6731333f532.HD-1080p-7.2Mbps-19516561.mp4" />
 
       <TestimonialsCarousel />
 

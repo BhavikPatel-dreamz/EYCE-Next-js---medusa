@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Zap } from "lucide-react";
 import { useGsapReveal } from "@/hooks/use-gsap";
+import { useLazyVideo } from "@/hooks/use-lazy-video";
 import { CountdownTimer } from "@/components/ui/countdown-timer";
 import { formatPrice } from "@/lib/format";
 import type { Product } from "@/types/product";
@@ -12,11 +13,20 @@ const SALE_END = new Date(Date.now() + 86400000 * 2 + 3600000 * 5 + 60000 * 30);
 
 export function FlashSale({ products = [] }: { products?: Product[] }) {
   const ref = useGsapReveal({ y: 20 });
+  const videoRef = useLazyVideo();
 
   if (products.length === 0) return null;
 
   return (
     <section className="relative overflow-hidden border-y border-border/60">
+      <video
+        ref={videoRef}
+        muted loop playsInline
+        preload="none"
+        className="absolute inset-0 size-full object-cover opacity-30"
+      >
+        <source src="https://www.eyce.com/cdn/shop/videos/c/vp/76845b7ddce4478f917e513764c33ebc/76845b7ddce4478f917e513764c33ebc.HD-720p-1.6Mbps-18896941.mp4" type="video/mp4" />
+      </video>
       <div className="absolute inset-0 bg-gradient-to-br from-rose/10 via-amber/5 to-rose/10" />
       <div className="absolute inset-0 animate-gradient bg-[length:200%_200%] bg-[radial-gradient(ellipse_at_20%_50%,_var(--color-rose)_0%,_transparent_50%),_radial-gradient(ellipse_at_80%_50%,_var(--color-amber)_0%,_transparent_50%)] opacity-[0.06]" />
       <div className="pointer-events-none absolute -left-32 -top-32 size-96 rounded-full bg-rose/10 blur-3xl" />
