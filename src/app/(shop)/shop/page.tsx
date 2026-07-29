@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default async function ShopPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; collection?: string; sort?: string; q?: string; page?: string; minPrice?: string; maxPrice?: string; inStock?: string; onSale?: string }>;
+  searchParams: Promise<{ category?: string; collection?: string; sort?: string; q?: string; page?: string; minPrice?: string; maxPrice?: string; inStock?: string; onSale?: string; view?: string }>;
 }) {
   const sp = await searchParams;
   const [cats, collections] = await Promise.all([getCategories(), getCollections()]);
@@ -43,6 +43,7 @@ export default async function ShopPage({
   const products = filtered.slice((page - 1) * perPage, page * perPage);
   const active = sp.category;
   const activeCatName = active ? cats.find((c) => c.slug === active)?.name : null;
+  const view = sp.view === "list" ? "list" : "grid";
 
   return (
     <div className="min-h-screen">
@@ -116,6 +117,7 @@ export default async function ShopPage({
           priceMin={priceMin}
           priceMax={priceMax}
           totalProducts={filtered.length}
+          currentView={view}
         />
 
         {products.length === 0 ? (
@@ -136,9 +138,32 @@ export default async function ShopPage({
           </div>
         ) : (
           <>
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {products.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
-            </div>
+            {view === "grid" ? (
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {products.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {products.map((p, i) => (
+                  <div key={p.id} className="flex gap-5 rounded-xl border border-border bg-card p-4 hover:shadow-sm transition-shadow">
+                    <div className="relative aspect-square w-28 shrink-0 overflow-hidden rounded-lg bg-surface sm:w-36">
+                      <img src={p.images[0]} alt={p.name} className="object-cover w-full h-full" />
+                    </div>
+                    <div className="flex flex-1 flex-col justify-center">
+                      <Link href={`/product/${p.slug}`} className="font-display font-semibold text-lg hover:text-primary transition-colors">{p.name}</Link>
+                      <p className="text-sm text-muted-foreground mt-1">{p.tagline}</p>
+                      <div className="mt-2 flex items-center gap-4">
+                        <span className="font-mono text-lg font-bold">{new Intl.NumberFormat("en-US", { style: "currency", currency: p.currency, maximumFractionDigits: 0 }).format(p.price)}</span>
+                        {p.compareAtPrice && <span className="font-mono text-sm text-muted-foreground line-through">{new Intl.NumberFormat("en-US", { style: "currency", currency: p.currency, maximumFractionDigits: 0 }).format(p.compareAtPrice)}</span>}
+                      </div>
+                      <Link href={`/product/${p.slug}`} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors w-fit">
+                        View product
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Pagination */}
             {totalPages > 1 && (
@@ -192,6 +217,7 @@ function buildHref(sp: Record<string, string | number | undefined>, overrides: R
   if (merged.maxPrice) params.set("maxPrice", String(merged.maxPrice));
   if (merged.inStock === "1") params.set("inStock", "1");
   if (merged.onSale === "1") params.set("onSale", "1");
+  if (merged.view === "list") params.set("view", "list");
   const p = Number(merged.page) || 1;
   if (p > 1) params.set("page", String(p));
   const qs = params.toString();

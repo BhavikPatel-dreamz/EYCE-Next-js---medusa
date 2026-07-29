@@ -10,6 +10,12 @@ import { blogPosts } from "@/data/blog";
 
 gsap.registerPlugin(ScrollTrigger);
 
+const sectionGradients = [
+  "from-cyan/5 via-transparent to-cyan/5",
+  "from-violet/5 via-transparent to-violet/5",
+  "from-rose/5 via-transparent to-rose/5",
+];
+
 export default function BlogPage() {
   const headerRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
@@ -48,6 +54,8 @@ export default function BlogPage() {
     return () => ctx.revert();
   }, []);
 
+  const getFeaturedGradient = (idx: number) => sectionGradients[idx % sectionGradients.length];
+
   return (
     <div className="min-h-screen">
       {/* Breadcrumb */}
@@ -62,13 +70,15 @@ export default function BlogPage() {
       </div>
 
       {/* Hero */}
-      <div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-br from-surface via-background to-surface">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--color-primary)_0%,transparent_50%)] opacity-[0.07]" />
+      <div className="relative overflow-hidden border-b border-border/60">
+        <div className="absolute inset-0 bg-gradient-to-br from-surface via-background to-surface" />
+        <div className="pointer-events-none absolute -left-32 -top-32 size-96 rounded-full bg-gradient-to-br from-cyan/10 via-violet/10 to-rose/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 right-0 size-64 rounded-full bg-amber/10 blur-3xl" />
         <div ref={headerRef} className="container-x relative py-12 md:py-16 opacity-0">
           <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-primary mb-3">
             EYCE Journal
           </div>
-          <h1 className="font-display text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
+          <h1 className="font-display text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl bg-gradient-to-r from-foreground via-primary to-cyan bg-clip-text text-transparent">
             Stories & guides.
           </h1>
           <p className="mt-3 max-w-lg text-sm text-muted-foreground leading-relaxed">
@@ -96,10 +106,11 @@ export default function BlogPage() {
                 sizes="(min-width: 768px) 50vw, 100vw"
                 className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
               />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/30 via-transparent to-transparent md:hidden" />
             </div>
             <div className="flex flex-col justify-center p-6 md:p-10">
               <div className="flex items-center gap-3 mb-4">
-                <span className="rounded-full bg-primary px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary-foreground">
+                <span className="rounded-full bg-gradient-to-r from-cyan to-violet px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
                   {featured.category}
                 </span>
                 <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
@@ -107,7 +118,7 @@ export default function BlogPage() {
                   {featured.readTime}
                 </span>
               </div>
-              <h2 className="font-display text-2xl font-bold leading-tight md:text-3xl group-hover:text-primary transition-colors">
+              <h2 className="font-display text-2xl font-bold leading-tight md:text-3xl transition-colors bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent group-hover:from-primary group-hover:to-cyan">
                 {featured.title}
               </h2>
               <p className="mt-3 text-sm text-muted-foreground leading-relaxed line-clamp-3">
@@ -115,7 +126,7 @@ export default function BlogPage() {
               </p>
               <div className="mt-6 flex items-center gap-4">
                 <div className="flex items-center gap-2.5">
-                  <div className="relative size-8 overflow-hidden rounded-full">
+                  <div className="relative size-8 overflow-hidden rounded-full ring-2 ring-primary/20">
                     <Image
                       src={featured.author.avatar}
                       alt={featured.author.name}
@@ -144,15 +155,28 @@ export default function BlogPage() {
 
       {/* All Posts Grid */}
       <div className="container-x pb-20">
-        <div className="mb-8">
-          <h2 className="font-display text-2xl font-bold tracking-tight">All articles</h2>
+        <div className="mb-8 flex items-end justify-between">
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-1">
+              Browse all
+            </div>
+            <h2 className="font-display text-2xl font-bold tracking-tight">All articles</h2>
+          </div>
+          <div className="hidden sm:flex gap-1">
+            {rest.map((_, i) => (
+              <span
+                key={i}
+                className={`size-1.5 rounded-full ${i === 0 ? "bg-primary" : "bg-border"}`}
+              />
+            ))}
+          </div>
         </div>
         <div ref={gridRef} className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {rest.map((post) => (
+          {rest.map((post, idx) => (
             <Link
               key={post.id}
               href={`/blog/${post.slug}`}
-              className="blog-item group overflow-hidden rounded-2xl bg-surface transition-colors hover:bg-surface/80 opacity-0"
+              className="blog-item group overflow-hidden rounded-2xl bg-gradient-to-br from-surface via-surface to-surface/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 opacity-0"
             >
               <div className="relative aspect-[16/10] overflow-hidden">
                 <Image
@@ -162,10 +186,11 @@ export default function BlogPage() {
                   sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                   className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               <div className="p-5">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-semibold text-primary">
+                  <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${idx % 3 === 0 ? "bg-cyan/10 text-cyan" : idx % 3 === 1 ? "bg-violet/10 text-violet" : "bg-rose/10 text-rose"}`}>
                     {post.category}
                   </span>
                   <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
@@ -179,9 +204,9 @@ export default function BlogPage() {
                 <p className="mt-2 text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                   {post.excerpt}
                 </p>
-                <div className="mt-4 flex items-center justify-between">
+                <div className="mt-4 flex items-center justify-between border-t border-border/40 pt-4">
                   <div className="flex items-center gap-2">
-                    <div className="relative size-6 overflow-hidden rounded-full">
+                    <div className="relative size-6 overflow-hidden rounded-full ring-1 ring-primary/20">
                       <Image
                         src={post.author.avatar}
                         alt={post.author.name}

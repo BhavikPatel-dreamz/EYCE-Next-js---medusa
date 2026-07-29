@@ -12,50 +12,63 @@ const megaMenuData: Record<string, {
   featured: { name: string; image: string; href: string; tag?: string }[];
   columns: { title: string; links: { name: string; href: string }[] }[];
 }> = {
-  "Shop All": {
+  "Disposable": {
     featured: [
-      { name: "Silicone Beaker Bong", image: "https://images.unsplash.com/photo-1618354691792-d1d42acfd860?w=400&auto=format&fit=crop&q=85", href: "/shop?category=bongs", tag: "Bestseller" },
-      { name: "Spark Rig II", image: "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=400&auto=format&fit=crop&q=85", href: "/shop?category=rigs", tag: "New" },
-      { name: "Hammer Pipe", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&auto=format&fit=crop&q=85", href: "/shop?category=pipes" },
+      { name: "Geek Bar Pulse", image: "https://images.unsplash.com/photo-1618354691792-d1d42acfd860?w=400&auto=format&fit=crop&q=85", href: "/shop?category=disposable", tag: "Bestseller" },
+      { name: "Elf Bar BC5000", image: "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=400&auto=format&fit=crop&q=85", href: "/shop?category=disposable", tag: "Popular" },
+      { name: "Lost Mary MO5000", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&auto=format&fit=crop&q=85", href: "/shop?category=disposable" },
     ],
     columns: [
-      { title: "Categories", links: [
-        { name: "All Products", href: "/shop" },
-        { name: "Bongs", href: "/shop?category=bongs" },
-        { name: "Dab Rigs", href: "/shop?category=rigs" },
-        { name: "Hand Pipes", href: "/shop?category=pipes" },
-        { name: "Accessories", href: "/shop?category=accessories" },
+      { title: "Brands", links: [
+        { name: "Geek Bar", href: "/shop?q=Geek+Bar" },
+        { name: "Elf Bar", href: "/shop?q=Elf+Bar" },
+        { name: "Lost Mary", href: "/shop?q=Lost+Mary" },
+        { name: "All Disposables", href: "/shop?category=disposable" },
       ]},
       { title: "Shop By", links: [
         { name: "New Arrivals", href: "/shop?sort=newest" },
         { name: "Bestsellers", href: "/shop" },
         { name: "On Sale", href: "/shop?onSale=1" },
-        { name: "All Collections", href: "/shop" },
+        { name: "All Products", href: "/shop" },
       ]},
     ],
   },
-  "Accessories": {
+  "Pods": {
     featured: [
-      { name: "Replacement Bowl", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&auto=format&fit=crop&q=85", href: "/shop?category=accessories" },
-      { name: "Quartz Banger", image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&auto=format&fit=crop&q=85", href: "/shop?category=accessories" },
+      { name: "SMOK Novo 5", image: "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=400&auto=format&fit=crop&q=85", href: "/shop?category=pods", tag: "Bestseller" },
+      { name: "Vaporesso XROS 3", image: "https://images.unsplash.com/photo-1618354691792-d1d42acfd860?w=400&auto=format&fit=crop&q=85", href: "/shop?category=pods", tag: "New" },
     ],
     columns: [
-      { title: "Accessories", links: [
-        { name: "Replacement Bowls", href: "/shop?category=accessories" },
-        { name: "Quartz Bangers", href: "/shop?category=accessories" },
-        { name: "Stash Containers", href: "/shop?category=accessories" },
-        { name: "Cleaning Kits", href: "/shop?category=accessories" },
+      { title: "Brands", links: [
+        { name: "SMOK", href: "/shop?q=SMOK" },
+        { name: "Vaporesso", href: "/shop?q=Vaporesso" },
+        { name: "Uwell", href: "/shop?q=Uwell" },
+        { name: "All Pod Systems", href: "/shop?category=pods" },
+      ]},
+    ],
+  },
+  "E-Liquids": {
+    featured: [
+      { name: "Naked 100", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&auto=format&fit=crop&q=85", href: "/shop?category=e-liquid", tag: "Popular" },
+      { name: "Juice Head", image: "https://images.unsplash.com/photo-1618354691792-d1d42acfd860?w=400&auto=format&fit=crop&q=85", href: "/shop?category=e-liquid" },
+    ],
+    columns: [
+      { title: "Flavors", links: [
+        { name: "Fruit", href: "/shop?q=fruit" },
+        { name: "Menthol", href: "/shop?q=menthol" },
+        { name: "Dessert", href: "/shop?q=dessert" },
+        { name: "All E-Liquids", href: "/shop?category=e-liquid" },
       ]},
     ],
   },
 };
 
 const nav = [
-  { label: "Shop All", href: "/shop", mega: true },
-  { label: "Bongs", href: "/shop?category=bongs" },
-  { label: "Rigs", href: "/shop?category=rigs" },
-  { label: "Pipes", href: "/shop?category=pipes" },
-  { label: "Accessories", href: "/shop?category=accessories", mega: true },
+  { label: "Disposable", href: "/shop?category=disposable", mega: true },
+  { label: "Pods", href: "/shop?category=pods", mega: true },
+  { label: "E-Liquids", href: "/shop?category=e-liquid", mega: true },
+  { label: "Starter Kits", href: "/shop?category=kits" },
+  { label: "Accessories", href: "/shop?category=accessories" },
   { label: "Blog", href: "/blog" },
 ];
 
@@ -108,7 +121,7 @@ export function Navbar() {
       <header
         className={`sticky top-0 z-40 w-full transition-all duration-300 ${
           scrolled
-            ? "bg-background/95 backdrop-blur-lg shadow-sm"
+            ? "bg-background/85 backdrop-blur-xl shadow-lg shadow-black/5 border-b border-border/50"
             : "bg-background"
         }`}
       >
@@ -325,7 +338,7 @@ export function Navbar() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search products..."
+                  placeholder="Search products, brands, flavors..."
                   className="w-full h-14 rounded-xl border border-border bg-card pl-12 pr-14 text-lg font-display placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                 />
                 <button
@@ -336,23 +349,63 @@ export function Navbar() {
                   <X className="size-5" />
                 </button>
               </form>
-              <div className="mt-6 max-w-2xl mx-auto">
-                <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
-                  Quick links
+
+              {!searchQuery && (
+                <div className="mt-8 max-w-2xl mx-auto grid gap-8 sm:grid-cols-2">
+                  <div>
+                    <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
+                      Trending searches
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {["Disposable Vapes", "Pod Systems", "E-Liquid", "Starter Kits", "Geek Bar", "Elf Bar"].map((term) => (
+                        <Link
+                          key={term}
+                          href={`/shop?q=${encodeURIComponent(term)}`}
+                          onClick={() => setSearchOpen(false)}
+                          className="rounded-full border border-border px-3.5 py-1.5 text-xs font-medium text-muted-foreground hover:border-foreground/30 hover:text-foreground transition-colors"
+                        >
+                          {term}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
+                      Popular categories
+                    </div>
+                    <div className="space-y-1">
+                      {["Disposable", "Pods", "E-Liquids", "Accessories", "New Arrivals", "On Sale"].map((term) => (
+                        <Link
+                          key={term}
+                          href={`/shop?q=${encodeURIComponent(term)}`}
+                          onClick={() => setSearchOpen(false)}
+                          className="block px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-surface rounded-lg transition-colors"
+                        >
+                          {term}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {["Bongs", "Dab Rigs", "Hand Pipes", "Accessories", "New Arrivals", "On Sale"].map((term) => (
-                    <Link
-                      key={term}
-                      href={`/shop?q=${encodeURIComponent(term)}`}
-                      onClick={() => setSearchOpen(false)}
-                      className="rounded-full border border-border px-3.5 py-1.5 text-xs font-medium text-muted-foreground hover:border-foreground/30 hover:text-foreground transition-colors"
-                    >
-                      {term}
-                    </Link>
-                  ))}
+              )}
+
+              {searchQuery && (
+                <div className="mt-6 max-w-2xl mx-auto">
+                  <Link
+                    href={`/shop?q=${encodeURIComponent(searchQuery)}`}
+                    onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
+                    className="flex items-center justify-between rounded-xl border border-border p-4 hover:bg-surface transition-colors group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Search className="size-4 text-muted-foreground" />
+                      <span className="text-sm">
+                        Search for &ldquo;<span className="font-medium">{searchQuery}</span>&rdquo;
+                      </span>
+                    </div>
+                    <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">Enter</span>
+                  </Link>
                 </div>
-              </div>
+              )}
             </div>
           </motion.div>
         )}

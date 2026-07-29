@@ -39,18 +39,19 @@ export function Newsletter() {
       <div className="container-x">
         <div
           ref={sectionRef}
-          className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-card via-card to-surface border border-border/80 px-8 py-14 md:px-16 md:py-20 opacity-0"
+          className="relative overflow-hidden rounded-3xl border border-border/60 bg-card px-8 py-14 md:px-16 md:py-20 opacity-0"
         >
           {/* Background decorations */}
-          <div className="pointer-events-none absolute -right-20 -top-20 size-64 rounded-full bg-primary/8 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-16 -left-16 size-48 rounded-full bg-primary/5 blur-3xl" />
+          <div className="pointer-events-none absolute -right-20 -top-20 size-64 rounded-full bg-primary/10 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-16 -left-16 size-48 rounded-full bg-violet/10 blur-3xl" />
+          <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-96 rounded-full bg-primary/5 blur-3xl" />
 
           <div className="relative mx-auto max-w-xl text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-background/50 px-4 py-1.5 font-mono text-[11px] uppercase tracking-widest text-muted-foreground mb-6">
-              <Mail className="size-3.5 text-primary" /> Newsletter
+            <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary/10 to-violet/10 px-4 py-1.5 font-mono text-[11px] uppercase tracking-widest text-primary mb-6 border border-primary/20">
+              <Mail className="size-3.5" /> Newsletter
             </div>
 
-            <h2 className="font-display text-3xl font-extrabold tracking-tight md:text-4xl">
+            <h2 className="font-display text-3xl font-extrabold tracking-tight md:text-4xl gradient-text">
               Drop-proof deals. In your inbox.
             </h2>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
@@ -79,7 +80,7 @@ export function Newsletter() {
                   onChange={(e) => setEmail(e.target.value)}
                   className="h-12 flex-1 bg-background border-border/80 focus:border-primary rounded-xl"
                 />
-                <Button type="submit" size="lg" className="h-12 gap-2 rounded-xl font-semibold shrink-0 shadow-lg shadow-primary/20">
+                <Button type="submit" size="lg" className="gradient-btn h-12 gap-2 rounded-xl font-semibold shrink-0 shadow-lg">
                   Subscribe
                   <ArrowRight className="size-4" />
                 </Button>

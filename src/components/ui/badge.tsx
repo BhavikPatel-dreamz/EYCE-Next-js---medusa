@@ -4,17 +4,20 @@ export function Badge({
   className,
   variant = "default",
   ...props
-}: React.HTMLAttributes<HTMLDivElement> & { variant?: "default" | "outline" | "accent" | "muted" }) {
+}: React.HTMLAttributes<HTMLDivElement> & { variant?: "default" | "outline" | "accent" | "muted" | "amber" | "rose" | "violet" }) {
   const styles = {
-    default: "bg-primary text-primary-foreground",
+    default: "badge-primary",
     outline: "border border-border text-foreground",
-    accent: "bg-primary text-primary-foreground",
+    accent: "badge-accent",
     muted: "bg-muted text-muted-foreground",
+    amber: "badge-amber",
+    rose: "badge-rose",
+    violet: "badge-accent",
   }[variant];
   return (
     <div
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase",
+        "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase shadow-sm",
         styles,
         className,
       )}

@@ -1,62 +1,96 @@
-import { Hero } from "@/components/home/hero";
+import { Suspense } from "react";
+import { HeroSlider } from "@/components/home/hero-slider";
 import { Categories } from "@/components/home/categories";
-import { FeaturedGrid } from "@/components/home/featured-grid";
-
-import { EditorialSplit } from "@/components/home/editorial-split";
-import { Testimonials } from "@/components/home/testimonials";
+import { ProductSection } from "@/components/home/product-section";
+import { ValuePropsSection } from "@/components/home/value-props-section";
+import { FlashSale } from "@/components/home/flash-sale";
+import { TestimonialsCarousel } from "@/components/home/testimonials-carousel";
+import { FAQSection } from "@/components/home/faq-section";
 import { Newsletter } from "@/components/home/newsletter";
-import { TechShowcase } from "@/components/home/tech-showcase";
-import { TrustBadges } from "@/components/home/trust-badges";
-import { InstagramCommunity } from "@/components/home/instagram-community";
-import { BlogSection } from "@/components/home/blog-section";
 import { getProducts, getCategories } from "@/lib/api";
 
 export default async function HomePage() {
-  const [{ products: list }, categories] = await Promise.all([
-    getProducts({ limit: 1 }),
+  const [
+    { products: heroProducts },
+    { products: featured },
+    { products: bestSellers },
+    { products: newArrivals },
+    { products: trending },
+    { products: saleProducts },
+    categories,
+  ] = await Promise.all([
+    getProducts({ limit: 8 }),
+    getProducts({ limit: 8, sort: "newest" }),
+    getProducts({ limit: 8, sort: "rating" }),
+    getProducts({ limit: 8, sort: "newest" }),
+    getProducts({ limit: 8 }),
+    getProducts({ limit: 8, sort: "rating" }),
     getCategories(),
   ]);
-  const heroProduct = list[0] ?? null;
+
+  // Simulate curated sections from the same product pool
+  const bestSellersData = bestSellers;
+  const newArrivalsData = newArrivals;
+  const trendingData = trending;
+  const flashSaleData = saleProducts.filter((p) => p.compareAtPrice != null);
 
   return (
     <>
-      <Hero product={heroProduct} />
+      <HeroSlider products={heroProducts} />
 
-      <div className="bg-gradient-to-b from-emerald-100 to-emerald-50/0">
-        <TrustBadges />
-      </div>
-
-      <div className="bg-gradient-to-b from-sky-100 to-sky-50/0">
+      <div className="section-gradient-1 relative">
+        <div className="pointer-events-none absolute -left-32 top-1/2 size-80 rounded-full bg-primary/10 blur-3xl" />
         <Categories categories={categories} />
       </div>
 
-      <div className="bg-gradient-to-b from-violet-100 via-indigo-100 to-violet-50/0">
-        <TechShowcase />
+      <div className="section-gradient-2 relative">
+        <div className="pointer-events-none absolute -right-32 top-1/2 size-80 rounded-full bg-violet/10 blur-3xl" />
+        <ProductSection
+          title="Featured Products"
+          tag="New arrivals"
+          products={featured}
+        />
       </div>
 
-      <div className="bg-gradient-to-b from-amber-100 to-amber-50/0">
-        <FeaturedGrid />
+      <div className="section-gradient-3 relative">
+        <div className="pointer-events-none absolute -left-28 -top-20 size-72 rounded-full bg-rose/10 blur-3xl" />
+        <ProductSection
+          title="Best Sellers"
+          tag="Top rated"
+          products={bestSellersData}
+        />
       </div>
 
-      <div className="bg-gradient-to-b from-rose-100 via-pink-100 to-rose-50/0">
-        <EditorialSplit />
+      <FlashSale products={flashSaleData.length > 0 ? flashSaleData : featured} />
+
+      <div className="section-gradient-4 relative">
+        <div className="pointer-events-none absolute -right-28 -bottom-20 size-72 rounded-full bg-amber/10 blur-3xl" />
+        <ProductSection
+          title="New Arrivals"
+          tag="Fresh drops"
+          products={newArrivalsData}
+        />
       </div>
 
-      <div className="bg-gradient-to-b from-teal-100 to-teal-50/0">
-        <BlogSection />
+      <div className="section-gradient-5 relative">
+        <div className="pointer-events-none absolute -left-32 top-1/2 size-80 rounded-full bg-teal/10 blur-3xl" />
+        <ProductSection
+          title="Trending Now"
+          tag="Popular picks"
+          products={trendingData}
+        />
       </div>
 
-      <div className="bg-gradient-to-b from-orange-100 to-orange-50/0">
-        <Testimonials />
+      <ValuePropsSection />
+
+      <TestimonialsCarousel />
+
+      <div className="section-gradient-1 relative">
+        <div className="pointer-events-none absolute -right-28 -top-20 size-72 rounded-full bg-primary/10 blur-3xl" />
+        <FAQSection />
       </div>
 
-      <div className="bg-gradient-to-b from-fuchsia-100 via-purple-100 to-fuchsia-50/0">
-        <InstagramCommunity />
-      </div>
-
-      <div className="bg-gradient-to-b from-lime-100 to-emerald-100">
-        <Newsletter />
-      </div>
+      <Newsletter />
     </>
   );
 }

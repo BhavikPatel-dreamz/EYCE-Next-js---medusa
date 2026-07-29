@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { Heart, ShoppingBag, Loader2, Eye } from "lucide-react";
+import { Heart, ShoppingBag, Loader2, Eye, Star, GitCompare, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Rating } from "@/components/ui/rating";
 import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/store/cart-store";
@@ -74,7 +75,8 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
         onMouseLeave={() => setHovered(false)}
       >
         {/* Image Container */}
-        <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-surface">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-surface shadow-sm group-hover:shadow-xl transition-all duration-300">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-violet/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10 pointer-events-none" />
           <Image
             src={product.images[0]}
             alt={product.name}
@@ -86,19 +88,19 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
             )}
           />
 
-          {/* Gradient overlay on hover */}
           <div className={cn(
-            "absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent transition-opacity duration-300",
+            "absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent transition-opacity duration-300",
             hovered ? "opacity-100" : "opacity-0",
           )} />
 
           {/* Badges */}
           <div className="absolute left-3 top-3 flex flex-col gap-1.5">
             {isSoldOut && <Badge variant="muted" className="text-[10px] px-2 py-0.5">Sold out</Badge>}
-            {!isSoldOut && product.new && <Badge variant="accent" className="text-[10px] px-2 py-0.5">New</Badge>}
-            {!isSoldOut && product.bestseller && <Badge className="text-[10px] px-2 py-0.5">Bestseller</Badge>}
+            {!isSoldOut && product.new && <Badge variant="accent" className="text-[10px] px-2 py-0.5"><span className="animate-pulse-soft">●</span> New</Badge>}
+            {!isSoldOut && product.bestseller && <Badge variant="amber" className="text-[10px] px-2 py-0.5"><span className="animate-wiggle inline-block">🔥</span> Bestseller</Badge>}
             {hasDiscount && (
-              <span className="inline-flex items-center rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-bold text-white">
+              <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-rose to-destructive px-2 py-0.5 text-[10px] font-bold text-white shadow-lg">
+                <Zap className="size-2.5" />
                 -{discountPct}%
               </span>
             )}
@@ -107,19 +109,27 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
           {/* Quick Actions */}
           <div className={cn(
             "absolute right-3 top-3 flex flex-col gap-2 transition-all duration-300",
-            hovered ? "opacity-100 translate-x-0" : "opacity-0 translate-x-2",
+            hovered ? "opacity-100 translate-x-0" : "opacity-0 translate-x-3",
           )}>
             <button
               type="button"
               onClick={(e) => { e.preventDefault(); toggle(product.id); }}
               aria-label="Add to wishlist"
-              className="flex size-9 items-center justify-center rounded-full bg-background/90 backdrop-blur-sm shadow-lg hover:bg-background transition-colors"
+              className="flex size-9 items-center justify-center rounded-full bg-background/90 backdrop-blur-sm shadow-lg hover:bg-background transition-all hover:scale-105"
             >
               <Heart className={cn("size-4", has && "fill-primary text-primary")} />
             </button>
+            <button
+              type="button"
+              onClick={(e) => { e.preventDefault(); window.open(`/product/${product.slug}`, '_blank'); }}
+              aria-label="Quick view"
+              className="flex size-9 items-center justify-center rounded-full bg-background/90 backdrop-blur-sm shadow-lg hover:bg-background transition-all hover:scale-105"
+            >
+              <Eye className="size-4" />
+            </button>
           </div>
 
-          {/* Quick Add Button - slides up on hover */}
+          {/* Quick Add Button */}
           <div className={cn(
             "absolute bottom-0 left-0 right-0 p-3 transition-all duration-300",
             hovered ? "translate-y-0 opacity-100" : "translate-y-full opacity-0",
@@ -128,14 +138,14 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
               type="button"
               onClick={handleAddToCart}
               disabled={isAdding || isSoldOut}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-background/95 backdrop-blur-sm py-2.5 text-xs font-semibold shadow-lg transition-colors hover:bg-primary hover:text-primary-foreground disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-background/95 backdrop-blur-sm py-3 text-xs font-semibold shadow-lg transition-all hover:bg-primary hover:text-primary-foreground disabled:opacity-60 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
             >
               {isAdding ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
                 <ShoppingBag className="size-4" />
               )}
-              {isAdding ? "Adding..." : isSoldOut ? "Sold out" : "Add to cart"}
+              {isAdding ? "Adding..." : isSoldOut ? "Sold out" : "Quick add"}
             </button>
           </div>
         </div>
@@ -153,8 +163,9 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
             </div>
           </div>
 
-          {/* Price */}
-          <div className="mt-2 flex items-baseline gap-2">
+          <Rating value={product.rating} count={product.reviewCount} className="mt-1.5" />
+
+          <div className="mt-1.5 flex items-baseline gap-2">
             <span className="font-mono text-sm font-bold">
               {formatPrice(product.price, product.currency)}
             </span>
@@ -165,7 +176,7 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
             )}
           </div>
 
-          {/* Color dots placeholder */}
+          {/* Color dots */}
           {product.variants.length > 1 && (
             <div className="mt-2 flex items-center gap-1">
               {product.variants.slice(0, 4).map((v) => (

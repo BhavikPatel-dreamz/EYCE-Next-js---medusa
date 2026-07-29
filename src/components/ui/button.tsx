@@ -9,11 +9,15 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground hover:bg-primary/90",
+          "gradient-btn",
+        secondary:
+          "bg-foreground text-background hover:bg-foreground/90",
         outline:
           "border border-border bg-transparent text-foreground hover:bg-muted",
         ghost: "hover:bg-muted text-foreground",
-        accent: "bg-primary text-primary-foreground hover:bg-primary/90",
+        accent: "gradient-btn-accent",
+        amber: "gradient-btn-amber",
+        rose: "gradient-btn-rose",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {

@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "www.eyce.com" },
       { protocol: "https", hostname: "medusa.dynamicdreamz.com" },
       { protocol: "https", hostname: "i.pravatar.cc" },
+      { protocol: "https", hostname: "logo.clearbit.com" },
+      { protocol: "https", hostname: "res.smoktech.com" },
+      { protocol: "https", hostname: "lostvape.com" },
+      { protocol: "https", hostname: "dashboard.trustprofile.com" },
     ],
   },
   async rewrites() {
