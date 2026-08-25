@@ -10,6 +10,10 @@ import { Newsletter } from "@/components/home/newsletter";
 import { VideoBanner } from "@/components/home/video-banner";
 import { getProducts, getCategories } from "@/lib/api";
 
+// Product and category data comes from Medusa, which may not be reachable
+// while the frontend image is being built. Fetch it when the page is requested.
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const [
     { products: heroProducts },
